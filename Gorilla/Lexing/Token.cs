@@ -25,6 +25,11 @@ namespace Gorilla.Lexing
             = new Dictionary<string, TokenType>() {
             { "let", TokenType.LET },
             { "fn", TokenType.FUNCTION },
+            { "if", TokenType.IF },
+            { "else", TokenType.ELSE },
+            { "return", TokenType.RETURN },
+            { "true", TokenType.TRUE },
+            { "false", TokenType.FALSE },
         };
     }
 
@@ -58,6 +63,11 @@ namespace Gorilla.Lexing
         // キーワード
         FUNCTION,
         LET,
+        IF,
+        ELSE,
+        TRUE,
+        FALSE,
+        RETURN,
         // その他必要になったら追加します。
     }
 }
