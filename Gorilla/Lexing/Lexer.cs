@@ -30,7 +30,7 @@
             }
             else
             {
-                this.NextChar = this.Input[this.Position];
+                this.NextChar = this.Input[this.Position + 1];
             }
 
             this.Position += 1;
