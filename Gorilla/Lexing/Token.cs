@@ -39,6 +39,14 @@ namespace Gorilla.Lexing
         // 演算子
         ASSIGN,
         PLUS,
+        MINUS,
+        ASTERISK,
+        SLASH,
+        BANG,
+        LT,
+        GT,
+        EQ,
+        NOT_EQ,
         // デリミタ
         COMMA,
         SEMICOLON,

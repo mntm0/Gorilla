@@ -97,5 +97,40 @@ let result = add(five, ten);";
                 Assert.AreEqual(testToken.Literal, token.Literal, "トークンのリテラルが間違っています。");
             }
         }
+
+        [TestMethod]
+        public void TestNextToken3()
+        {
+            var input = "1 == 1; 1 != 0; ><*/-=";
+
+            var testTokens = new List<Token>();
+            // 1 == 1;
+            testTokens.Add(new Token(TokenType.INT, "1"));
+            testTokens.Add(new Token(TokenType.EQ, "=="));
+            testTokens.Add(new Token(TokenType.INT, "1"));
+            testTokens.Add(new Token(TokenType.SEMICOLON, ";"));
+            // 1 != 0;
+            testTokens.Add(new Token(TokenType.INT, "1"));
+            testTokens.Add(new Token(TokenType.NOT_EQ, "!="));
+            testTokens.Add(new Token(TokenType.INT, "0"));
+            testTokens.Add(new Token(TokenType.SEMICOLON, ";"));
+            // ><*/-
+            testTokens.Add(new Token(TokenType.GT, ">"));
+            testTokens.Add(new Token(TokenType.LT, "<"));
+            testTokens.Add(new Token(TokenType.ASTERISK, "*"));
+            testTokens.Add(new Token(TokenType.SLASH, "/"));
+            testTokens.Add(new Token(TokenType.MINUS, "-"));
+            testTokens.Add(new Token(TokenType.ASSIGN, "="));
+            testTokens.Add(new Token(TokenType.EOF, ""));
+
+            var lexer = new Lexer(input);
+
+            foreach (var testToken in testTokens)
+            {
+                var token = lexer.NextToken();
+                Assert.AreEqual(testToken.Type, token.Type, "トークンの種類が間違っています。");
+                Assert.AreEqual(testToken.Literal, token.Literal, "トークンのリテラルが間違っています。");
+            }
+        }
     }
 }
