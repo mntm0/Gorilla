@@ -1,4 +1,6 @@
-﻿namespace Gorilla.Lexing
+﻿using System.Collections.Generic;
+
+namespace Gorilla.Lexing
 {
     public class Token
     {
@@ -9,6 +11,21 @@
         }
         public TokenType Type { get; set; }
         public string Literal { get; set; }
+
+        public static TokenType LookupIdentifier(string identifier)
+        {
+            if (Token.Keywords.ContainsKey(identifier))
+            {
+                return Keywords[identifier];
+            }
+            return TokenType.IDENT;
+        }
+
+        public static Dictionary<string, TokenType> Keywords
+            = new Dictionary<string, TokenType>() {
+            { "let", TokenType.LET },
+            { "fn", TokenType.FUNCTION },
+        };
     }
 
     public enum TokenType
