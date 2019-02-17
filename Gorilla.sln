@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gorilla", "Gorilla\Gorilla.csproj", "{FFE5322B-5A13-4D88-8AD0-B8C085A6E130}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestProject", "UnitTestProject\UnitTestProject.csproj", "{D89FCB95-7E5D-4114-94B7-9FF69078EFB6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FFE5322B-5A13-4D88-8AD0-B8C085A6E130} = {FFE5322B-5A13-4D88-8AD0-B8C085A6E130}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
