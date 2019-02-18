@@ -6,7 +6,10 @@ namespace Gorilla
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("Hello Gorilla Script!");
+
+            var repl = new Repl();
+            repl.Start();
         }
     }
 }
