@@ -49,6 +49,8 @@ namespace Gorilla.Parsing
             {
                 case TokenType.LET:
                     return this.ParseLetStatement();
+                case TokenType.RETURN:
+                    return this.ParseReturnStatement();
                 default:
                     return null;
             }
@@ -73,6 +75,22 @@ namespace Gorilla.Parsing
             if (!this.ExpectPeek(TokenType.ASSIGN)) return null;
 
             // 式(let文の右辺)
+            // TODO: 後で実装。
+            while (this.CurrentToken.Type != TokenType.SEMICOLON)
+            {
+                // セミコロンが見つかるまで
+                this.ReadToken();
+            }
+
+            return statement;
+        }
+
+        public ReturnStatement ParseReturnStatement()
+        {
+            var statement = new ReturnStatement();
+            statement.Token = this.CurrentToken;
+            this.ReadToken();
+
             // TODO: 後で実装。
             while (this.CurrentToken.Type != TokenType.SEMICOLON)
             {

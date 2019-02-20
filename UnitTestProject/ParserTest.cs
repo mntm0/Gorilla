@@ -59,6 +59,38 @@ let xyz = 838383;";
             );
         }
 
+        [TestMethod]
+        public void TestReturnStatement1()
+        {
+            var input = @"return 5;
+return 10;
+return = 993322;";
+
+            var lexer = new Lexer(input);
+            var parser = new Parser(lexer);
+            var root = parser.ParseProgram();
+            this._CheckParserErrors(parser);
+
+            Assert.AreEqual(
+                root.Statements.Count, 3,
+                "Root.Statementsの数が間違っています。"
+            );
+
+            foreach (var statement in root.Statements)
+            {
+                var returnStatement = statement as ReturnStatement;
+                if (returnStatement == null)
+                {
+                    Assert.Fail("statement が ReturnStatement ではありません。");
+                }
+
+                Assert.AreEqual(
+                    returnStatement.TokenLiteral(), "return",
+                    $"return のリテラルが間違っています。"
+                );
+            }
+        }
+
         private void _CheckParserErrors(Parser parser)
         {
             if (parser.Errors.Count == 0) return;
