@@ -11,6 +11,7 @@ namespace Gorilla.Parsing
         public Token CurrentToken { get; set; }
         public Token NextToken { get; set; }
         public Lexer Lexer { get; }
+        public List<string> Errors { get; set; } = new List<string>();
 
         public Parser(Lexer lexer)
         {
@@ -36,8 +37,7 @@ namespace Gorilla.Parsing
             {
                 var statement = this.ParseStatement();
                 if (statement != null) root.Statements.Add(statement);
-
-
+                
                 this.ReadToken();
             }
             return root;
@@ -91,7 +91,13 @@ namespace Gorilla.Parsing
                 this.ReadToken();
                 return true;
             }
+            this.AddNextTokenError(type, this.NextToken.Type);
             return false;
+        }
+
+        private void AddNextTokenError(TokenType expected, TokenType actual)
+        {
+            this.Errors.Add($"{actual.ToString()} ではなく {expected.ToString()} が来なければなりません。");
         }
     }
 }

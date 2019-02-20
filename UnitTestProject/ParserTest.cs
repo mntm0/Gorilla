@@ -19,6 +19,7 @@ let xyz = 838383;";
             var lexer = new Lexer(input);
             var parser = new Parser(lexer);
             var root = parser.ParseProgram();
+            this._CheckParserErrors(parser);
 
             Assert.AreEqual(
                 root.Statements.Count, 3,
@@ -56,7 +57,13 @@ let xyz = 838383;";
                 letStatement.Name.TokenLiteral(), name,
                 $"識別子のリテラルが間違っています。"
             );
+        }
 
+        private void _CheckParserErrors(Parser parser)
+        {
+            if (parser.Errors.Count == 0) return;
+            var message = "\n" + string.Join("\n", parser.Errors);
+            Assert.Fail(message);
         }
     }
 }
