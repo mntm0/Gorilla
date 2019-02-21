@@ -13,6 +13,8 @@ namespace Gorilla.Ast.Expressions
             this.Value = value;
         }
 
-        public string TokenLiteral() => this.Token.Literal;
+        public string TokenLiteral() => this.Token?.Literal ?? "";
+
+        public string ToCode() => this.Value;
     }
 }

@@ -3,5 +3,6 @@
     public interface INode
     {
         string TokenLiteral();
+        string ToCode();
     }
 }
