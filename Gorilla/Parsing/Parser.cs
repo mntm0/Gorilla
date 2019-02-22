@@ -2,16 +2,22 @@
 using Gorilla.Ast.Expressions;
 using Gorilla.Ast.Statements;
 using Gorilla.Lexing;
+using System;
 using System.Collections.Generic;
 
 namespace Gorilla.Parsing
 {
+    using PrefixParseFn = Func<IExpression>;
+    using InfixParseFn = Func<IExpression, IExpression>;
+
     public class Parser
     {
         public Token CurrentToken { get; set; }
         public Token NextToken { get; set; }
         public Lexer Lexer { get; }
         public List<string> Errors { get; set; } = new List<string>();
+        public Dictionary<TokenType, PrefixParseFn> PrefixParseFns { get; set; }
+        public Dictionary<TokenType, InfixParseFn> InfixParseFns { get; set; }
 
         public Parser(Lexer lexer)
         {
@@ -20,6 +26,15 @@ namespace Gorilla.Parsing
             // 2つ分のトークンを読み込んでセットしておく
             this.CurrentToken = this.Lexer.NextToken();
             this.NextToken = this.Lexer.NextToken();
+
+            // トークンの種類と解析関数を関連付ける
+            this.RegisterPrefixParseFns();
+        }
+
+        private void RegisterPrefixParseFns()
+        {
+            this.PrefixParseFns = new Dictionary<TokenType, PrefixParseFn>();
+            this.PrefixParseFns.Add(TokenType.IDENT, this.ParseIdentifier);
         }
 
         private void ReadToken()
@@ -52,13 +67,22 @@ namespace Gorilla.Parsing
                 case TokenType.RETURN:
                     return this.ParseReturnStatement();
                 default:
-                    return null;
+                    return ParseExpressionStatement();
             }
         }
 
-        public IExpression ParseExpression()
+        public IExpression ParseExpression(Precedence precedence)
         {
-            return null;
+            this.PrefixParseFns.TryGetValue(this.CurrentToken.Type, out var prefix);
+            if (prefix == null) return null;
+
+            var leftExpression = prefix();
+            return leftExpression;
+        }
+
+        public IExpression ParseIdentifier()
+        {
+            return new Identifier(this.CurrentToken, this.CurrentToken.Literal);
         }
 
         public LetStatement ParseLetStatement()
@@ -101,6 +125,19 @@ namespace Gorilla.Parsing
             return statement;
         }
 
+        public ExpressionStatement ParseExpressionStatement()
+        {
+            var statement = new ExpressionStatement();
+            statement.Token = this.CurrentToken;
+
+            statement.Expression = this.ParseExpression(Precedence.LOWEST);
+
+            // セミコロンを読み飛ばす(省略可能)
+            if (this.NextToken.Type == TokenType.SEMICOLON) this.ReadToken();
+
+            return statement;
+        }
+
         private bool ExpectPeek(TokenType type)
         {
             // 次のトークンが期待するものであれば読み進める
@@ -117,5 +154,16 @@ namespace Gorilla.Parsing
         {
             this.Errors.Add($"{actual.ToString()} ではなく {expected.ToString()} が来なければなりません。");
         }
+    }
+
+    public enum Precedence
+    {
+        LOWEST = 1,
+        EQUALS,      // ==
+        LESSGREATER, // >, <
+        SUM,         // +
+        PRODUCT,     // *
+        PREFIX,      // -x, !x
+        CALL,        // myFunction(x)
     }
 }

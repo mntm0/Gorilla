@@ -3,6 +3,7 @@ using Gorilla.Lexing;
 using Gorilla.Parsing;
 using Gorilla.Ast.Statements;
 using Gorilla.Ast;
+using Gorilla.Ast.Expressions;
 
 namespace UnitTestProject
 {
@@ -96,6 +97,42 @@ return = 993322;";
             if (parser.Errors.Count == 0) return;
             var message = "\n" + string.Join("\n", parser.Errors);
             Assert.Fail(message);
+        }
+
+        [TestMethod]
+        public void TestIdentifierExpression1()
+        {
+            var input = @"foobar;";
+
+            var lexer = new Lexer(input);
+            var parser = new Parser(lexer);
+            var root = parser.ParseProgram();
+            this._CheckParserErrors(parser);
+
+            Assert.AreEqual(
+                root.Statements.Count, 1,
+                "Root.Statementsの数が間違っています。"
+            );
+
+            var statement = root.Statements[0] as ExpressionStatement;
+            if (statement == null)
+            {
+                Assert.Fail("statement が ExpressionStatement ではありません。");
+            }
+
+            var ident = statement.Expression as Identifier;
+            if (ident == null)
+            {
+                Assert.Fail("Expression が Identifier ではありません。");
+            }
+            if (ident.Value != "foobar")
+            {
+                Assert.Fail("ident.Value が foobar ではありません。");
+            }
+            if (ident.TokenLiteral() != "foobar")
+            {
+                Assert.Fail("ident.TokenLiteral が foobar ではありません。");
+            }
         }
     }
 }
