@@ -134,5 +134,41 @@ return = 993322;";
                 Assert.Fail("ident.TokenLiteral が foobar ではありません。");
             }
         }
+
+        [TestMethod]
+        public void TestIntegerLiteralExpression1()
+        {
+            var input = @"123;";
+
+            var lexer = new Lexer(input);
+            var parser = new Parser(lexer);
+            var root = parser.ParseProgram();
+            this._CheckParserErrors(parser);
+
+            Assert.AreEqual(
+                root.Statements.Count, 1,
+                "Root.Statementsの数が間違っています。"
+            );
+
+            var statement = root.Statements[0] as ExpressionStatement;
+            if (statement == null)
+            {
+                Assert.Fail("statement が ExpressionStatement ではありません。");
+            }
+
+            var integerLiteral = statement.Expression as IntegerLiteral;
+            if (integerLiteral == null)
+            {
+                Assert.Fail("Expression が IntegerLiteral ではありません。");
+            }
+            if (integerLiteral.Value != 123)
+            {
+                Assert.Fail("integerLiteral.Value が 123 ではありません。");
+            }
+            if (integerLiteral.TokenLiteral() != "123")
+            {
+                Assert.Fail("integerLiteral.TokenLiteral が 123 ではありません。");
+            }
+        }
     }
 }

@@ -35,6 +35,7 @@ namespace Gorilla.Parsing
         {
             this.PrefixParseFns = new Dictionary<TokenType, PrefixParseFn>();
             this.PrefixParseFns.Add(TokenType.IDENT, this.ParseIdentifier);
+            this.PrefixParseFns.Add(TokenType.INT, this.ParseIntegerLiteral);
         }
 
         private void ReadToken()
@@ -52,7 +53,7 @@ namespace Gorilla.Parsing
             {
                 var statement = this.ParseStatement();
                 if (statement != null) root.Statements.Add(statement);
-                
+
                 this.ReadToken();
             }
             return root;
@@ -83,6 +84,24 @@ namespace Gorilla.Parsing
         public IExpression ParseIdentifier()
         {
             return new Identifier(this.CurrentToken, this.CurrentToken.Literal);
+        }
+
+        public IExpression ParseIntegerLiteral()
+        {
+            // リテラルを整数値に変換
+            if (int.TryParse(this.CurrentToken.Literal, out int result))
+            {
+                return new IntegerLiteral()
+                {
+                    Token = this.CurrentToken,
+                    Value = result,
+                };
+            }
+
+            // 型変換失敗時
+            var message = $"{this.CurrentToken.Literal} を integer に変換できません。";
+            this.Errors.Add(message);
+            return null;
         }
 
         public LetStatement ParseLetStatement()
