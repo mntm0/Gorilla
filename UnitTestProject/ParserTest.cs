@@ -170,5 +170,63 @@ return = 993322;";
                 Assert.Fail("integerLiteral.TokenLiteral が 123 ではありません。");
             }
         }
+
+        [TestMethod]
+        public void TestPrefixExpressions1()
+        {
+            var tests = new[] {
+                ("!5", "!", 5),
+                ("-15", "-", 15),
+            };
+
+            foreach (var (input, op, value) in tests)
+            {
+                var lexer = new Lexer(input);
+                var parser = new Parser(lexer);
+                var root = parser.ParseProgram();
+                this._CheckParserErrors(parser);
+
+                Assert.AreEqual(
+                    root.Statements.Count, 1,
+                    "Root.Statementsの数が間違っています。"
+                );
+
+                var statement = root.Statements[0] as ExpressionStatement;
+                if (statement == null)
+                {
+                    Assert.Fail("statement が ExpressionStatement ではありません。");
+                }
+
+                var expression = statement.Expression as PrefixExpression;
+                if (expression == null)
+                {
+                    Assert.Fail("expression が PrefixExpression ではありません。");
+                }
+
+                if (expression.Operator != op)
+                {
+                    Assert.Fail($"Operator が {expression.Operator} ではありません。({op})");
+                }
+
+                this._TestIntegerLiteral(expression.Right, value);
+            }
+        }
+
+        public void _TestIntegerLiteral(IExpression expression, int value)
+        {
+            var integerLiteral = expression as IntegerLiteral;
+            if (integerLiteral == null)
+            {
+                Assert.Fail("Expression が IntegerLiteral ではありません。");
+            }
+            if (integerLiteral.Value != value)
+            {
+                Assert.Fail($"integerLiteral.Value が {value} ではありません。");
+            }
+            if (integerLiteral.TokenLiteral() != $"{value}")
+            {
+                Assert.Fail($"ident.TokenLiteral が {value} ではありません。");
+            }
+        }
     }
 }
