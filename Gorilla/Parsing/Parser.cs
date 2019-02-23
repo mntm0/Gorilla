@@ -18,6 +18,40 @@ namespace Gorilla.Parsing
         public List<string> Errors { get; set; } = new List<string>();
         public Dictionary<TokenType, PrefixParseFn> PrefixParseFns { get; set; }
         public Dictionary<TokenType, InfixParseFn> InfixParseFns { get; set; }
+        public Dictionary<TokenType, Precedence> Precedences { get; set; } =
+            new Dictionary<TokenType, Precedence>()
+            {
+                { TokenType.EQ, Precedence.EQUALS },
+                { TokenType.NOT_EQ, Precedence.EQUALS },
+                { TokenType.LT, Precedence.LESSGREATER },
+                { TokenType.GT, Precedence.LESSGREATER },
+                { TokenType.PLUS, Precedence.SUM },
+                { TokenType.MINUS, Precedence.SUM },
+                { TokenType.SLASH, Precedence.PRODUCT },
+                { TokenType.ASTERISK, Precedence.PRODUCT },
+            };
+        public Precedence CurrentPrecedence
+        {
+            get
+            {
+                if (this.Precedences.TryGetValue(this.CurrentToken.Type, out var p))
+                {
+                    return p;
+                }
+                return Precedence.LOWEST;
+            }
+        }
+        public Precedence NextPrecedence
+        {
+            get
+            {
+                if (this.Precedences.TryGetValue(this.NextToken.Type, out var p))
+                {
+                    return p;
+                }
+                return Precedence.LOWEST;
+            }
+        }
 
         public Parser(Lexer lexer)
         {
@@ -29,6 +63,7 @@ namespace Gorilla.Parsing
 
             // トークンの種類と解析関数を関連付ける
             this.RegisterPrefixParseFns();
+            this.RegisterInfixParseFns();
         }
 
         private void RegisterPrefixParseFns()
@@ -38,6 +73,19 @@ namespace Gorilla.Parsing
             this.PrefixParseFns.Add(TokenType.INT, this.ParseIntegerLiteral);
             this.PrefixParseFns.Add(TokenType.BANG, this.ParsePrefixExpression);
             this.PrefixParseFns.Add(TokenType.MINUS, this.ParsePrefixExpression);
+        }
+
+        private void RegisterInfixParseFns()
+        {
+            this.InfixParseFns = new Dictionary<TokenType, InfixParseFn>();
+            this.InfixParseFns.Add(TokenType.PLUS, this.ParseInfixExpression);
+            this.InfixParseFns.Add(TokenType.MINUS, this.ParseInfixExpression);
+            this.InfixParseFns.Add(TokenType.SLASH, this.ParseInfixExpression);
+            this.InfixParseFns.Add(TokenType.ASTERISK, this.ParseInfixExpression);
+            this.InfixParseFns.Add(TokenType.EQ, this.ParseInfixExpression);
+            this.InfixParseFns.Add(TokenType.NOT_EQ, this.ParseInfixExpression);
+            this.InfixParseFns.Add(TokenType.LT, this.ParseInfixExpression);
+            this.InfixParseFns.Add(TokenType.GT, this.ParseInfixExpression);
         }
 
         private void ReadToken()
@@ -84,6 +132,20 @@ namespace Gorilla.Parsing
             }
 
             var leftExpression = prefix();
+
+            while (this.NextToken.Type != TokenType.SEMICOLON
+                && precedence < this.NextPrecedence)
+            {
+                this.InfixParseFns.TryGetValue(this.NextToken.Type, out var infix);
+                if (infix == null)
+                {
+                    return leftExpression;
+                }
+
+                this.ReadToken();
+                leftExpression = infix(leftExpression);
+            }
+
             return leftExpression;
         }
 
@@ -121,6 +183,22 @@ namespace Gorilla.Parsing
             this.ReadToken();
 
             expression.Right = this.ParseExpression(Precedence.PREFIX);
+            return expression;
+        }
+
+        public IExpression ParseInfixExpression(IExpression left)
+        {
+            var expression = new InfixExpression()
+            {
+                Token = this.CurrentToken,
+                Operator = this.CurrentToken.Literal,
+                Left = left,
+            };
+
+            var precedence = this.CurrentPrecedence;
+            this.ReadToken();
+            expression.Right = this.ParseExpression(precedence);
+
             return expression;
         }
 

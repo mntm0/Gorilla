@@ -228,5 +228,82 @@ return = 993322;";
                 Assert.Fail($"ident.TokenLiteral が {value} ではありません。");
             }
         }
+
+        [TestMethod]
+        public void TestInfixExpressions1()
+        {
+            var tests = new[] {
+                ("1 + 1;", 1, "+", 1),
+                ("1 - 1;", 1, "-", 1),
+                ("1 * 1;", 1, "*", 1),
+                ("1 / 1;", 1, "/", 1),
+                ("1 < 1;", 1, "<", 1),
+                ("1 > 1;", 1, ">", 1),
+                ("1 == 1;", 1, "==", 1),
+                ("1 != 1;", 1, "!=", 1),
+            };
+
+            foreach (var (input, leftValue, op, RightValue) in tests)
+            {
+                var lexer = new Lexer(input);
+                var parser = new Parser(lexer);
+                var root = parser.ParseProgram();
+                this._CheckParserErrors(parser);
+
+                Assert.AreEqual(
+                    root.Statements.Count, 1,
+                    "Root.Statementsの数が間違っています。"
+                );
+
+                var statement = root.Statements[0] as ExpressionStatement;
+                if (statement == null)
+                {
+                    Assert.Fail("statement が ExpressionStatement ではありません。");
+                }
+
+                var expression = statement.Expression as InfixExpression;
+                if (expression == null)
+                {
+                    Assert.Fail("expression が InfixExpression ではありません。");
+                }
+
+                this._TestIntegerLiteral(expression.Left, leftValue);
+
+                if (expression.Operator != op)
+                {
+                    Assert.Fail($"Operator が {expression.Operator} ではありません。({op})");
+                }
+
+                this._TestIntegerLiteral(expression.Right, RightValue);
+            }
+        }
+
+        [TestMethod]
+        public void TestOperatorPrecedenceParsing()
+        {
+            var tests = new[]
+            {
+                ("a + b", "(a + b)"),
+                ("!-a", "(!(-a))"),
+                ("a + b - c", "((a + b) - c)"),
+                ("a * b / c", "((a * b) / c)"),
+                ("a + b * c", "(a + (b * c))"),
+                ("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
+                ("1 + 2; -3 * 4", "(1 + 2)\r\n((-3) * 4)"),
+                ("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
+                ("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
+            };
+
+            foreach (var (input, code) in tests)
+            {
+                var lexer = new Lexer(input);
+                var parser = new Parser(lexer);
+                var root = parser.ParseProgram();
+                this._CheckParserErrors(parser);
+
+                var actual = root.ToCode();
+                Assert.AreEqual(code, actual);
+            }
+        }
     }
 }
