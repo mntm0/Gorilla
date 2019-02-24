@@ -76,6 +76,7 @@ namespace Gorilla.Parsing
             this.PrefixParseFns.Add(TokenType.TRUE, this.ParseBooleanLiteral);
             this.PrefixParseFns.Add(TokenType.FALSE, this.ParseBooleanLiteral);
             this.PrefixParseFns.Add(TokenType.LPAREN, this.ParseGroupedExpression);
+            this.PrefixParseFns.Add(TokenType.IF, this.ParseIfExpression);
         }
 
         private void RegisterInfixParseFns()
@@ -223,6 +224,58 @@ namespace Gorilla.Parsing
             if (!this.ExpectPeek(TokenType.RPAREN)) return null;
 
             return expression;
+        }
+
+        public IExpression ParseIfExpression()
+        {
+            var expression = new IfExpression()
+            {
+                Token = this.CurrentToken
+            };
+
+            if (!this.ExpectPeek(TokenType.LPAREN)) return null;
+
+            this.ReadToken();
+            expression.Condition = this.ParseExpression(Precedence.LOWEST);
+
+            if (!this.ExpectPeek(TokenType.RPAREN)) return null;
+            if (!this.ExpectPeek(TokenType.LBRACE)) return null;
+
+            expression.Consequence = this.ParseBlockStatement();
+
+            if (this.NextToken.Type == TokenType.ELSE)
+            {
+                this.ReadToken();
+                if (!this.ExpectPeek(TokenType.LBRACE)) return null;
+
+                expression.Alternative = this.ParseBlockStatement();
+            }
+
+            return expression;
+        }
+
+        public BlockStatement ParseBlockStatement()
+        {
+            var block = new BlockStatement()
+            {
+                Token = this.CurrentToken,
+                Statements = new List<IStatement>(),
+            };
+
+            this.ReadToken();
+
+            while (this.CurrentToken.Type != TokenType.RBRACE
+                && this.CurrentToken.Type != TokenType.EOF)
+            {
+                var statement = this.ParseStatement();
+                if (statement != null)
+                {
+                    block.Statements.Add(statement);
+                }
+                this.ReadToken();
+            }
+
+            return block;
         }
 
         public LetStatement ParseLetStatement()
