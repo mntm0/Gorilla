@@ -73,6 +73,8 @@ namespace Gorilla.Parsing
             this.PrefixParseFns.Add(TokenType.INT, this.ParseIntegerLiteral);
             this.PrefixParseFns.Add(TokenType.BANG, this.ParsePrefixExpression);
             this.PrefixParseFns.Add(TokenType.MINUS, this.ParsePrefixExpression);
+            this.PrefixParseFns.Add(TokenType.TRUE, this.ParseBooleanLiteral);
+            this.PrefixParseFns.Add(TokenType.FALSE, this.ParseBooleanLiteral);
         }
 
         private void RegisterInfixParseFns()
@@ -156,7 +158,7 @@ namespace Gorilla.Parsing
 
         public IExpression ParseIntegerLiteral()
         {
-            // リテラルを整数値に変換
+            // リテラルを真偽値に変換
             if (int.TryParse(this.CurrentToken.Literal, out int result))
             {
                 return new IntegerLiteral()
@@ -170,6 +172,15 @@ namespace Gorilla.Parsing
             var message = $"{this.CurrentToken.Literal} を integer に変換できません。";
             this.Errors.Add(message);
             return null;
+        }
+
+        public IExpression ParseBooleanLiteral()
+        {
+            return new BooleanLiteral()
+            {
+                Token = this.CurrentToken,
+                Value = this.CurrentToken.Type == TokenType.TRUE,
+            };
         }
 
         public IExpression ParsePrefixExpression()
