@@ -75,6 +75,7 @@ namespace Gorilla.Parsing
             this.PrefixParseFns.Add(TokenType.MINUS, this.ParsePrefixExpression);
             this.PrefixParseFns.Add(TokenType.TRUE, this.ParseBooleanLiteral);
             this.PrefixParseFns.Add(TokenType.FALSE, this.ParseBooleanLiteral);
+            this.PrefixParseFns.Add(TokenType.LPAREN, this.ParseGroupedExpression);
         }
 
         private void RegisterInfixParseFns()
@@ -209,6 +210,17 @@ namespace Gorilla.Parsing
             var precedence = this.CurrentPrecedence;
             this.ReadToken();
             expression.Right = this.ParseExpression(precedence);
+
+            return expression;
+        }
+
+        public IExpression ParseGroupedExpression()
+        {
+            this.ReadToken();
+
+            var expression = this.ParseExpression(Precedence.LOWEST);
+
+            if (!this.ExpectPeek(TokenType.RPAREN)) return null;
 
             return expression;
         }
