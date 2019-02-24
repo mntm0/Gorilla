@@ -49,15 +49,7 @@ let xyz = 838383;";
                 Assert.Fail("statement が LetStatement ではありません。");
             }
 
-            Assert.AreEqual(
-                letStatement.Name.Value, name,
-                $"識別子が間違っています。"
-            );
-
-            Assert.AreEqual(
-                letStatement.Name.TokenLiteral(), name,
-                $"識別子のリテラルが間違っています。"
-            );
+            this._TestIdentifier(letStatement.Name, name);
         }
 
         [TestMethod]
@@ -120,19 +112,7 @@ return = 993322;";
                 Assert.Fail("statement が ExpressionStatement ではありません。");
             }
 
-            var ident = statement.Expression as Identifier;
-            if (ident == null)
-            {
-                Assert.Fail("Expression が Identifier ではありません。");
-            }
-            if (ident.Value != "foobar")
-            {
-                Assert.Fail("ident.Value が foobar ではありません。");
-            }
-            if (ident.TokenLiteral() != "foobar")
-            {
-                Assert.Fail("ident.TokenLiteral が foobar ではありません。");
-            }
+            this._TestIdentifier(statement.Expression, "foobar");
         }
 
         [TestMethod]
@@ -156,19 +136,7 @@ return = 993322;";
                 Assert.Fail("statement が ExpressionStatement ではありません。");
             }
 
-            var integerLiteral = statement.Expression as IntegerLiteral;
-            if (integerLiteral == null)
-            {
-                Assert.Fail("Expression が IntegerLiteral ではありません。");
-            }
-            if (integerLiteral.Value != 123)
-            {
-                Assert.Fail("integerLiteral.Value が 123 ではありません。");
-            }
-            if (integerLiteral.TokenLiteral() != "123")
-            {
-                Assert.Fail("integerLiteral.TokenLiteral が 123 ではありません。");
-            }
+            this._TestIntegerLiteral(statement.Expression, 123);
         }
 
         [TestMethod]
@@ -243,7 +211,7 @@ return = 993322;";
                 ("1 != 1;", 1, "!=", 1),
             };
 
-            foreach (var (input, leftValue, op, RightValue) in tests)
+            foreach (var (input, leftValue, op, rightValue) in tests)
             {
                 var lexer = new Lexer(input);
                 var parser = new Parser(lexer);
@@ -261,20 +229,7 @@ return = 993322;";
                     Assert.Fail("statement が ExpressionStatement ではありません。");
                 }
 
-                var expression = statement.Expression as InfixExpression;
-                if (expression == null)
-                {
-                    Assert.Fail("expression が InfixExpression ではありません。");
-                }
-
-                this._TestIntegerLiteral(expression.Left, leftValue);
-
-                if (expression.Operator != op)
-                {
-                    Assert.Fail($"Operator が {expression.Operator} ではありません。({op})");
-                }
-
-                this._TestIntegerLiteral(expression.Right, RightValue);
+                this._TestInfixExpression(statement.Expression, leftValue, op, rightValue);
             }
         }
 
@@ -304,6 +259,57 @@ return = 993322;";
                 var actual = root.ToCode();
                 Assert.AreEqual(code, actual);
             }
+        }
+
+        private void _TestIdentifier(IExpression expression, string value)
+        {
+            var ident = expression as Identifier;
+            if (ident == null)
+            {
+                Assert.Fail("Expression が Identifier ではありません。");
+            }
+            if (ident.Value != value)
+            {
+                Assert.Fail($"ident.Value が {value} ではありません。({ident.Value})");
+            }
+            if (ident.TokenLiteral() != value)
+            {
+                Assert.Fail($"ident.TokenLiteral が {value} ではありません。({ident.TokenLiteral()})");
+            }
+        }
+
+        private void _TestLiteralExpression(IExpression expression, object expected)
+        {
+            switch (expected)
+            {
+                case int intValue:
+                    this._TestIntegerLiteral(expression, intValue);
+                    break;
+                case string stringValue:
+                    this._TestIdentifier(expression, stringValue);
+                    break;
+                default:
+                    Assert.Fail("予期せぬ型です。");
+                    break;
+            }
+        }
+
+        private void _TestInfixExpression(IExpression expression, object left, string op, object right)
+        {
+            var infixExpression = expression as InfixExpression;
+            if (infixExpression == null)
+            {
+                Assert.Fail("expression が InfixExpression ではありません。");
+            }
+
+            this._TestLiteralExpression(infixExpression.Left, left);
+
+            if (infixExpression.Operator != op)
+            {
+                Assert.Fail($"Operator が {infixExpression.Operator} ではありません。({op})");
+            }
+
+            this._TestLiteralExpression(infixExpression.Right, right);
         }
     }
 }
