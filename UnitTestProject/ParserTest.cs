@@ -478,5 +478,82 @@ return = 993322;";
             }
             this._TestIdentifier(alternative.Expression, "y");
         }
+
+        [TestMethod]
+        public void TestFunctionLiteral()
+        {
+            var input = "fn(x, y) { x + y; }";
+            var lexer = new Lexer(input);
+            var parser = new Parser(lexer);
+            var root = parser.ParseProgram();
+            this._CheckParserErrors(parser);
+
+            Assert.AreEqual(
+                root.Statements.Count, 1,
+                "Root.Statementsの数が間違っています。"
+            );
+
+            var statement = root.Statements[0] as ExpressionStatement;
+            if (statement == null)
+            {
+                Assert.Fail("statement が ExpressionStatement ではありません。");
+            }
+
+            var expression = statement.Expression as FunctionLiteral;
+            if (expression == null)
+            {
+                Assert.Fail("expression が FunctionLiteral ではありません。");
+            }
+
+            Assert.AreEqual(
+                expression.Parameters.Count, 2,
+                "関数リテラルの引数の数が間違っています。"
+            );
+            this._TestIdentifier(expression.Parameters[0], "x");
+            this._TestIdentifier(expression.Parameters[1], "y");
+
+            Assert.AreEqual(
+                expression.Body.Statements.Count, 1,
+                "関数リテラルの本文の式の数が間違っています。"
+            );
+
+            var bodyStatement = expression.Body.Statements[0] as ExpressionStatement;
+            if (bodyStatement == null)
+            {
+                Assert.Fail("bodyStatement が ExpressionStatement ではありません。");
+            }
+            this._TestInfixExpression(bodyStatement.Expression, "x", "+", "y");
+        }
+
+        [TestMethod]
+        public void TestFunctionParameter()
+        {
+            var tests = new[]
+            {
+                ("fn() {};", new string[] { }),
+                ("fn(x) {};", new string[] { "x" }),
+                ("fn(x, y, z) {};", new string[] { "x", "y", "z" }),
+            };
+
+            foreach (var (input, parameters) in tests)
+            {
+                var lexer = new Lexer(input);
+                var parser = new Parser(lexer);
+                var root = parser.ParseProgram();
+
+                var statement = root.Statements[0] as ExpressionStatement;
+                var fn = statement.Expression as FunctionLiteral;
+
+
+                Assert.AreEqual(
+                    fn.Parameters.Count, parameters.Length,
+                    "関数リテラルの引数の数が間違っています。"
+                );
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    this._TestIdentifier(fn.Parameters[i], parameters[i]);
+                }
+            }
+        }
     }
 }

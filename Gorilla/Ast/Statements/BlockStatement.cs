@@ -15,7 +15,7 @@ namespace Gorilla.Ast.Statements
             builder.Append("{");
             foreach (var statement in this.Statements)
             {
-                builder.Append(statement.ToCode());
+                builder.Append(statement.ToCode() + " ");
             }
             builder.Append("}");
             return builder.ToString();

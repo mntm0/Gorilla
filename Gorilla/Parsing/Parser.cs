@@ -77,6 +77,7 @@ namespace Gorilla.Parsing
             this.PrefixParseFns.Add(TokenType.FALSE, this.ParseBooleanLiteral);
             this.PrefixParseFns.Add(TokenType.LPAREN, this.ParseGroupedExpression);
             this.PrefixParseFns.Add(TokenType.IF, this.ParseIfExpression);
+            this.PrefixParseFns.Add(TokenType.FUNCTION, this.ParseFunctionLiteral);
         }
 
         private void RegisterInfixParseFns()
@@ -252,6 +253,49 @@ namespace Gorilla.Parsing
             }
 
             return expression;
+        }
+
+        public IExpression ParseFunctionLiteral()
+        {
+            var fn = new FunctionLiteral()
+            {
+                Token = this.CurrentToken
+            };
+
+            if (!this.ExpectPeek(TokenType.LPAREN)) return null;
+
+            fn.Parameters = this.ParseParameters();
+
+            if (!this.ExpectPeek(TokenType.LBRACE)) return null;
+
+            fn.Body = this.ParseBlockStatement();
+
+            return fn;
+        }
+
+        public List<Identifier> ParseParameters()
+        {
+            var parameters = new List<Identifier>();
+
+            if (this.NextToken.Type == TokenType.RPAREN)
+            {
+                this.ReadToken();
+                return parameters;
+            }
+
+            this.ReadToken();
+            parameters.Add(new Identifier(this.CurrentToken, this.CurrentToken.Literal));
+
+            while (this.NextToken.Type == TokenType.COMMA)
+            {
+                this.ReadToken();
+                this.ReadToken();
+                parameters.Add(new Identifier(this.CurrentToken, this.CurrentToken.Literal));
+            }
+
+            if (!this.ExpectPeek(TokenType.RPAREN)) return null;
+
+            return parameters;
         }
 
         public BlockStatement ParseBlockStatement()
