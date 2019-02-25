@@ -29,6 +29,7 @@ namespace Gorilla.Parsing
                 { TokenType.MINUS, Precedence.SUM },
                 { TokenType.SLASH, Precedence.PRODUCT },
                 { TokenType.ASTERISK, Precedence.PRODUCT },
+                { TokenType.LPAREN, Precedence.CALL },
             };
         public Precedence CurrentPrecedence
         {
@@ -91,6 +92,7 @@ namespace Gorilla.Parsing
             this.InfixParseFns.Add(TokenType.NOT_EQ, this.ParseInfixExpression);
             this.InfixParseFns.Add(TokenType.LT, this.ParseInfixExpression);
             this.InfixParseFns.Add(TokenType.GT, this.ParseInfixExpression);
+            this.InfixParseFns.Add(TokenType.LPAREN, this.ParseCallExpression);
         }
 
         private void ReadToken()
@@ -271,6 +273,40 @@ namespace Gorilla.Parsing
             fn.Body = this.ParseBlockStatement();
 
             return fn;
+        }
+
+        public IExpression ParseCallExpression(IExpression fn)
+        {
+            var expression = new CallExpression()
+            {
+                Token = this.CurrentToken,
+                Function = fn,
+                Arguments = this.ParseCallArguments(),
+            };
+            
+            return expression;
+        }
+
+        public List<IExpression> ParseCallArguments()
+        {
+            var args = new List<IExpression>();
+
+            this.ReadToken();
+
+            if (this.CurrentToken.Type == TokenType.RPAREN) return args;
+
+            args.Add(this.ParseExpression(Precedence.LOWEST));
+
+            while (this.NextToken.Type == TokenType.COMMA)
+            {
+                this.ReadToken();
+                this.ReadToken();
+                args.Add(this.ParseExpression(Precedence.LOWEST));
+            }
+
+            if (!this.ExpectPeek(TokenType.RPAREN)) return null;
+
+            return args;
         }
 
         public List<Identifier> ParseParameters()

@@ -258,6 +258,9 @@ return = 993322;";
                 ("!(true == true)", "(!(true == true))"),
                 ("1 + (2 - 3) * 4", "(1 + ((2 - 3) * 4))"),
                 ("(1 + -(2 + 3)) * 4", "((1 + (-(2 + 3))) * 4)"),
+                ("add(1, 2) + 3 > 4", "((add(1, 2) + 3) > 4)"),
+                ("add(x, y, 1, 2*3, 4+5, add(z) )", "add(x, y, 1, (2 * 3), (4 + 5), add(z))"),
+                ("add(1 + 2 - 3 * 4 / 5 + 6)", "add((((1 + 2) - ((3 * 4) / 5)) + 6))"),
             };
 
             foreach (var (input, code) in tests)
@@ -543,8 +546,7 @@ return = 993322;";
 
                 var statement = root.Statements[0] as ExpressionStatement;
                 var fn = statement.Expression as FunctionLiteral;
-
-
+                
                 Assert.AreEqual(
                     fn.Parameters.Count, parameters.Length,
                     "関数リテラルの引数の数が間違っています。"
@@ -554,6 +556,44 @@ return = 993322;";
                     this._TestIdentifier(fn.Parameters[i], parameters[i]);
                 }
             }
+        }
+
+        [TestMethod]
+        public void TestCallExpression()
+        {
+            var input = "add(1, 2 * 3, 4 + 5);";
+            var lexer = new Lexer(input);
+            var parser = new Parser(lexer);
+            var root = parser.ParseProgram();
+            this._CheckParserErrors(parser);
+
+            Assert.AreEqual(
+                root.Statements.Count, 1,
+                "Root.Statementsの数が間違っています。"
+            );
+
+            var statement = root.Statements[0] as ExpressionStatement;
+            if (statement == null)
+            {
+                Assert.Fail("statement が ExpressionStatement ではありません。");
+            }
+
+            var expression = statement.Expression as CallExpression;
+            if (expression == null)
+            {
+                Assert.Fail("expression が CallExpression ではありません。");
+            }
+
+            this._TestIdentifier(expression.Function, "add");
+
+            Assert.AreEqual(
+                expression.Arguments.Count, 3,
+                "関数リテラルの引数の数が間違っています。"
+            );
+
+            this._TestLiteralExpression(expression.Arguments[0], 1);
+            this._TestInfixExpression(expression.Arguments[1], 2, "*", 3);
+            this._TestInfixExpression(expression.Arguments[2], 4, "+", 5);
         }
     }
 }
