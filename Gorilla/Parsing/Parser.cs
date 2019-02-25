@@ -365,19 +365,14 @@ namespace Gorilla.Parsing
 
             if (!this.ExpectPeek(TokenType.IDENT)) return null;
 
-            // 識別子(let文の左辺)
             statement.Name = new Identifier(CurrentToken, this.CurrentToken.Literal);
 
-            // 等号 =
             if (!this.ExpectPeek(TokenType.ASSIGN)) return null;
 
-            // 式(let文の右辺)
-            // TODO: 後で実装。
-            while (this.CurrentToken.Type != TokenType.SEMICOLON)
-            {
-                // セミコロンが見つかるまで
-                this.ReadToken();
-            }
+            this.ReadToken();
+            statement.Value = this.ParseExpression(Precedence.LOWEST);
+
+            if (this.NextToken.Type == TokenType.SEMICOLON) this.ReadToken();
 
             return statement;
         }
@@ -388,12 +383,9 @@ namespace Gorilla.Parsing
             statement.Token = this.CurrentToken;
             this.ReadToken();
 
-            // TODO: 後で実装。
-            while (this.CurrentToken.Type != TokenType.SEMICOLON)
-            {
-                // セミコロンが見つかるまで
-                this.ReadToken();
-            }
+            statement.ReturnValue = this.ParseExpression(Precedence.LOWEST);
+
+            if (this.NextToken.Type == TokenType.SEMICOLON) this.ReadToken();
 
             return statement;
         }
