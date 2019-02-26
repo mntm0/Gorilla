@@ -1,4 +1,5 @@
-﻿using Gorilla.Lexing;
+﻿using Gorilla.Evaluating;
+using Gorilla.Lexing;
 using Gorilla.Parsing;
 using System;
 
@@ -30,7 +31,12 @@ namespace Gorilla
                     continue;
                 }
 
-                Console.WriteLine(root.ToCode());
+                var evaluator = new Evaluator();
+                var evaluated = evaluator.Eval(root);
+                if (evaluated != null)
+                {
+                    Console.WriteLine(evaluated.Inspect());
+                }
             }
         }
     }
