@@ -44,5 +44,32 @@ namespace UnitTestProject
 
             Assert.AreEqual(expected, result.Value);
         }
+
+        [TestMethod]
+        public void TestEvalBooleanExpression()
+        {
+            var tests = new(string, bool)[]
+            {
+                ("true;", true),
+                ("false", false),
+            };
+
+            foreach (var (input, expected) in tests)
+            {
+                var evaluated = this._TestEval(input);
+                this._TestBooleanObject(evaluated, expected);
+            }
+        }
+
+        private void _TestBooleanObject(IObject obj, bool expected)
+        {
+            var result = obj as BooleanObject;
+            if (result == null)
+            {
+                Assert.Fail("object が Boolean ではありません。");
+            }
+
+            Assert.AreEqual(expected, result.Value);
+        }
     }
 }

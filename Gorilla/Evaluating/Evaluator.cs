@@ -8,6 +8,9 @@ namespace Gorilla.Evaluating
 {
     public class Evaluator
     {
+        public BooleanObject True = new BooleanObject(true);
+        public BooleanObject False = new BooleanObject(false);
+
         public IObject Eval(INode node)
         {
             switch (node)
@@ -20,6 +23,8 @@ namespace Gorilla.Evaluating
                 // 式
                 case IntegerLiteral integerLiteral:
                     return new IntegerObject(integerLiteral.Value);
+                case BooleanLiteral booleanLiteral:
+                    return booleanLiteral.Value ? this.True : this.False;
             }
             return null;
         }
