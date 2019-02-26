@@ -71,5 +71,25 @@ namespace UnitTestProject
 
             Assert.AreEqual(expected, result.Value);
         }
+
+        [TestMethod]
+        public void TestEvalBangOperator()
+        {
+            var tests = new(string, bool)[]
+            {
+                ("!true", false),
+                ("!false", true),
+                ("!5", false),
+                ("!!true", true),
+                ("!!!true", false),
+                ("!!5", true),
+            };
+
+            foreach (var (input, expected) in tests)
+            {
+                var evaluated = this._TestEval(input);
+                this._TestBooleanObject(evaluated, expected);
+            }
+        }
     }
 }

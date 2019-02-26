@@ -22,6 +22,9 @@ namespace Gorilla.Evaluating
                 case ExpressionStatement statement:
                     return this.Eval(statement.Expression);
                 // 式
+                case PrefixExpression prefixExpression:
+                    var right = this.Eval(prefixExpression.Right);
+                    return this.EvalPrefixExpression(prefixExpression.Operator, right);
                 case IntegerLiteral integerLiteral:
                     return new IntegerObject(integerLiteral.Value);
                 case BooleanLiteral booleanLiteral:
@@ -38,6 +41,24 @@ namespace Gorilla.Evaluating
                 result = this.Eval(statement);
             }
             return result;
+        }
+
+        public IObject EvalPrefixExpression(string op, IObject right)
+        {
+            switch (op)
+            {
+                case "!":
+                    return this.EvalBangOperator(right);
+            }
+            return this.Null;
+        }
+
+        public IObject EvalBangOperator(IObject right)
+        {
+            if (right == this.True) return this.False;
+            if (right == this.False) return this.True;
+            if (right == this.Null) return this.True;
+            return this.False;
         }
     }
 }
