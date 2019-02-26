@@ -10,6 +10,7 @@ namespace Gorilla.Evaluating
     {
         public BooleanObject True = new BooleanObject(true);
         public BooleanObject False = new BooleanObject(false);
+        public NullObject Null = new NullObject();
 
         public IObject Eval(INode node)
         {
