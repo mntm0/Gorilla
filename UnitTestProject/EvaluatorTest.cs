@@ -16,6 +16,8 @@ namespace UnitTestProject
             {
                 ("1", 1),
                 ("12", 12),
+                ("-1", -1),
+                ("-12", -12),
             };
 
             foreach (var (input, expected) in tests)

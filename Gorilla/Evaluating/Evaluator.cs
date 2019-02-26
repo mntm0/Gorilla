@@ -49,6 +49,8 @@ namespace Gorilla.Evaluating
             {
                 case "!":
                     return this.EvalBangOperator(right);
+                case "-":
+                    return this.EvalMinusPrefixOperatorExpression(right);
             }
             return this.Null;
         }
@@ -59,6 +61,14 @@ namespace Gorilla.Evaluating
             if (right == this.False) return this.True;
             if (right == this.Null) return this.True;
             return this.False;
+        }
+
+        public IObject EvalMinusPrefixOperatorExpression(IObject right)
+        {
+            if (right.Type() != ObjectType.INTEGER) return this.Null;
+
+            var value = (right as IntegerObject).Value;
+            return new IntegerObject(-value);
         }
     }
 }
