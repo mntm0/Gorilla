@@ -1,4 +1,5 @@
 ﻿using Gorilla.Lexing;
+using Gorilla.Parsing;
 using System;
 
 namespace Gorilla
@@ -17,10 +18,19 @@ namespace Gorilla
                 if (string.IsNullOrEmpty(input)) return;
 
                 var lexer = new Lexer(input);
-                for (var token = lexer.NextToken(); token.Type != TokenType.EOF; token = lexer.NextToken())
+                var parser = new Parser(lexer);
+                var root = parser.ParseProgram();
+
+                if (parser.Errors.Count > 0)
                 {
-                    Console.WriteLine($"{{ Type: {token.Type.ToString()}, Literal: {token.Literal} }}");
+                    foreach (var error in parser.Errors)
+                    {
+                        Console.WriteLine($"\t{error}");
+                    }
+                    continue;
                 }
+
+                Console.WriteLine(root.ToCode());
             }
         }
     }
