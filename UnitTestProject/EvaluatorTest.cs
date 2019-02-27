@@ -61,6 +61,22 @@ namespace UnitTestProject
             {
                 ("true;", true),
                 ("false", false),
+                ("1 < 2", true),
+                ("1 > 2", false),
+                ("1 == 2", false),
+                ("1 != 2", true),
+                ("1 > 2", false),
+                ("1 < 2", true),
+                ("1 == 1", true),
+                ("2 != 2", false),
+                ("true == true", true),
+                ("true != true", false),
+                ("true == false", false),
+                ("true != false", true),
+                ("(1 > 2) == true", false),
+                ("(1 > 2) != false", false),
+                ("(1 < 2) == false", false),
+                ("(1 > 2) != true", true),
             };
 
             foreach (var (input, expected) in tests)

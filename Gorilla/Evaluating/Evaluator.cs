@@ -34,7 +34,7 @@ namespace Gorilla.Evaluating
                 case IntegerLiteral integerLiteral:
                     return new IntegerObject(integerLiteral.Value);
                 case BooleanLiteral booleanLiteral:
-                    return booleanLiteral.Value ? this.True : this.False;
+                    return this.ToBooleanObject(booleanLiteral.Value);
             }
             return null;
         }
@@ -85,6 +85,14 @@ namespace Gorilla.Evaluating
                 return this.EvalIntegerInfixExpression(op, leftIntegerObject, rightIntegerObject);
             }
 
+            switch (op)
+            {
+                case "==":
+                    return ToBooleanObject(left == right);
+                case "!=":
+                    return ToBooleanObject(left!= right);
+            }
+
             return this.Null;
         }
 
@@ -103,8 +111,18 @@ namespace Gorilla.Evaluating
                     return new IntegerObject(leftValue * rightValue);
                 case "/":
                     return new IntegerObject(leftValue / rightValue);
+                case "<":
+                    return this.ToBooleanObject(leftValue < rightValue);
+                case ">":
+                    return this.ToBooleanObject(leftValue > rightValue);
+                case "==":
+                    return this.ToBooleanObject(leftValue == rightValue);
+                case "!=":
+                    return this.ToBooleanObject(leftValue != rightValue);
             }
             return this.Null;
         }
+
+        public BooleanObject ToBooleanObject(bool value) => value ? this.True : this.False;
     }
 }
