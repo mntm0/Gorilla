@@ -16,7 +16,7 @@ namespace Gorilla.Evaluating
         {
             switch (node)
             {
-                //文
+                // 文
                 case Root root:
                     return this.EvalStatements(root.Statements);
                 case ExpressionStatement statement:
@@ -25,6 +25,12 @@ namespace Gorilla.Evaluating
                 case PrefixExpression prefixExpression:
                     var right = this.Eval(prefixExpression.Right);
                     return this.EvalPrefixExpression(prefixExpression.Operator, right);
+                case InfixExpression infixExpression:
+                    return this.EvalInfixExpression(
+                        infixExpression.Operator,
+                        this.Eval(infixExpression.Left),
+                        this.Eval(infixExpression.Right)
+                    );
                 case IntegerLiteral integerLiteral:
                     return new IntegerObject(integerLiteral.Value);
                 case BooleanLiteral booleanLiteral:
@@ -69,6 +75,36 @@ namespace Gorilla.Evaluating
 
             var value = (right as IntegerObject).Value;
             return new IntegerObject(-value);
+        }
+
+        public IObject EvalInfixExpression(string op, IObject left, IObject right)
+        {
+            if (left is IntegerObject leftIntegerObject
+                && right is IntegerObject rightIntegerObject)
+            {
+                return this.EvalIntegerInfixExpression(op, leftIntegerObject, rightIntegerObject);
+            }
+
+            return this.Null;
+        }
+
+        public IObject EvalIntegerInfixExpression(string op, IntegerObject left, IntegerObject right)
+        {
+            var leftValue = left.Value;
+            var rightValue = right.Value;
+
+            switch (op)
+            {
+                case "+":
+                    return new IntegerObject(leftValue + rightValue);
+                case "-":
+                    return new IntegerObject(leftValue - rightValue);
+                case "*":
+                    return new IntegerObject(leftValue * rightValue);
+                case "/":
+                    return new IntegerObject(leftValue / rightValue);
+            }
+            return this.Null;
         }
     }
 }
