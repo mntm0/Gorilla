@@ -1,5 +1,6 @@
 ﻿using Gorilla.Evaluating;
 using Gorilla.Lexing;
+using Gorilla.Objects;
 using Gorilla.Parsing;
 using System;
 
@@ -11,6 +12,7 @@ namespace Gorilla
 
         public void Start()
         {
+            var enviroment = new Enviroment();
             while (true)
             {
                 Console.Write(PROMPT);
@@ -32,7 +34,7 @@ namespace Gorilla
                 }
 
                 var evaluator = new Evaluator();
-                var evaluated = evaluator.Eval(root);
+                var evaluated = evaluator.Eval(root, enviroment);
                 if (evaluated != null)
                 {
                     Console.WriteLine(evaluated.Inspect());

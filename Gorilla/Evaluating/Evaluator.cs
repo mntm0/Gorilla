@@ -2,6 +2,7 @@
 using Gorilla.Ast.Expressions;
 using Gorilla.Ast.Statements;
 using Gorilla.Objects;
+using System;
 using System.Collections.Generic;
 
 namespace Gorilla.Evaluating
@@ -12,52 +13,60 @@ namespace Gorilla.Evaluating
         public BooleanObject False = new BooleanObject(false);
         public NullObject Null = new NullObject();
 
-        public IObject Eval(INode node)
+        public IObject Eval(INode node, Enviroment enviroment)
         {
             switch (node)
             {
                 // 文
                 case Root root:
-                    return this.EvalRootProgram(root.Statements);
+                    return this.EvalRootProgram(root.Statements, enviroment);
                 case ExpressionStatement statement:
-                    return this.Eval(statement.Expression);
+                    return this.Eval(statement.Expression, enviroment);
                 case BlockStatement blockStatement:
-                    return this.EvalBlockStatement(blockStatement);
+                    return this.EvalBlockStatement(blockStatement, enviroment);
                 case ReturnStatement returnStatement:
-                    var value = this.Eval(returnStatement.ReturnValue);
+                    var value = this.Eval(returnStatement.ReturnValue, enviroment);
                     if (this.IsError(value)) return value;
                     return new ReturnValue(value);
+                case LetStatement letStatement:
+                    var letValue = this.Eval(letStatement.Value, enviroment);
+                    if (this.IsError(letValue)) return letValue;
+                    enviroment.Set(letStatement.Name.Value, letValue);
+                    break;
                 // 式
                 case PrefixExpression prefixExpression:
-                    var right = this.Eval(prefixExpression.Right);
+                    var right = this.Eval(prefixExpression.Right, enviroment);
                     if (this.IsError(right)) return right;
-                    return this.EvalPrefixExpression(prefixExpression.Operator, right);
+                    return this.EvalPrefixExpression(prefixExpression.Operator, right, enviroment);
                 case InfixExpression infixExpression:
-                    var ifLeft = this.Eval(infixExpression.Left);
+                    var ifLeft = this.Eval(infixExpression.Left, enviroment);
                     if (this.IsError(ifLeft)) return ifLeft;
-                    var ifRight = this.Eval(infixExpression.Right);
+                    var ifRight = this.Eval(infixExpression.Right, enviroment);
                     if (this.IsError(ifRight)) return ifRight;
                     return this.EvalInfixExpression(
                         infixExpression.Operator,
                         ifLeft,
-                        ifRight
+                        ifRight,
+                        enviroment
                     );
                 case IfExpression ifExpression:
-                    return this.EvalIfExpression(ifExpression);
+                    return this.EvalIfExpression(ifExpression, enviroment);
                 case IntegerLiteral integerLiteral:
                     return new IntegerObject(integerLiteral.Value);
                 case BooleanLiteral booleanLiteral:
                     return this.ToBooleanObject(booleanLiteral.Value);
+                case Identifier identifier:
+                    return this.EvalIdentifier(identifier, enviroment);
             }
             return null;
         }
 
-        public IObject EvalRootProgram(List<IStatement> statements)
+        public IObject EvalRootProgram(List<IStatement> statements, Enviroment enviroment)
         {
             IObject result = null;
             foreach (var statement in statements)
             {
-                result = this.Eval(statement);
+                result = this.Eval(statement, enviroment);
 
                 switch (result)
                 {
@@ -72,12 +81,12 @@ namespace Gorilla.Evaluating
             return result;
         }
 
-        public IObject EvalBlockStatement(BlockStatement blockStatement)
+        public IObject EvalBlockStatement(BlockStatement blockStatement, Enviroment enviroment)
         {
             IObject result = null;
             foreach (var statement in blockStatement.Statements)
             {
-                result = this.Eval(statement);
+                result = this.Eval(statement, enviroment);
 
                 if (result.Type() == ObjectType.RETURN_VALUE
                     || result.Type() == ObjectType.ERROR_OBJ) return result;
@@ -85,19 +94,19 @@ namespace Gorilla.Evaluating
             return result;
         }
 
-        public IObject EvalPrefixExpression(string op, IObject right)
+        public IObject EvalPrefixExpression(string op, IObject right, Enviroment enviroment)
         {
             switch (op)
             {
                 case "!":
-                    return this.EvalBangOperator(right);
+                    return this.EvalBangOperator(right, enviroment);
                 case "-":
-                    return this.EvalMinusPrefixOperatorExpression(right);
+                    return this.EvalMinusPrefixOperatorExpression(right, enviroment);
             }
             return new Error($"未知の演算子: {op}{right.Type()}");
         }
 
-        public IObject EvalBangOperator(IObject right)
+        public IObject EvalBangOperator(IObject right, Enviroment enviroment)
         {
             if (right == this.True) return this.False;
             if (right == this.False) return this.True;
@@ -105,7 +114,7 @@ namespace Gorilla.Evaluating
             return this.False;
         }
 
-        public IObject EvalMinusPrefixOperatorExpression(IObject right)
+        public IObject EvalMinusPrefixOperatorExpression(IObject right, Enviroment enviroment)
         {
             if (right.Type() != ObjectType.INTEGER)
                 return new Error($"未知の演算子: -{right.Type()}");
@@ -114,12 +123,12 @@ namespace Gorilla.Evaluating
             return new IntegerObject(-value);
         }
 
-        public IObject EvalInfixExpression(string op, IObject left, IObject right)
+        public IObject EvalInfixExpression(string op, IObject left, IObject right, Enviroment enviroment)
         {
             if (left is IntegerObject leftIntegerObject
                 && right is IntegerObject rightIntegerObject)
             {
-                return this.EvalIntegerInfixExpression(op, leftIntegerObject, rightIntegerObject);
+                return this.EvalIntegerInfixExpression(op, leftIntegerObject, rightIntegerObject, enviroment);
             }
 
             switch (op)
@@ -136,7 +145,7 @@ namespace Gorilla.Evaluating
             return new Error($"未知の演算子: {left.Type()} {op} {right.Type()}");
         }
 
-        public IObject EvalIntegerInfixExpression(string op, IntegerObject left, IntegerObject right)
+        public IObject EvalIntegerInfixExpression(string op, IntegerObject left, IntegerObject right, Enviroment enviroment)
         {
             var leftValue = left.Value;
             var rightValue = right.Value;
@@ -165,20 +174,27 @@ namespace Gorilla.Evaluating
 
         public BooleanObject ToBooleanObject(bool value) => value ? this.True : this.False;
 
-        public IObject EvalIfExpression(IfExpression ifExpression)
+        public IObject EvalIfExpression(IfExpression ifExpression, Enviroment enviroment)
         {
-            var condition = this.Eval(ifExpression.Condition);
+            var condition = this.Eval(ifExpression.Condition, enviroment);
             if (this.IsError(condition)) return condition;
 
             if (this.IsTruthly(condition))
             {
-                return this.EvalBlockStatement(ifExpression.Consequence);
+                return this.EvalBlockStatement(ifExpression.Consequence, enviroment);
             }
             else if (ifExpression.Alternative != null)
             {
-                return this.EvalBlockStatement(ifExpression.Alternative);
+                return this.EvalBlockStatement(ifExpression.Alternative, enviroment);
             }
             return this.Null;
+        }
+
+        public IObject EvalIdentifier(Identifier identifier, Enviroment enviroment)
+        {
+            var (value, ok) = enviroment.Get(identifier.Value);
+            if (ok) return value;
+            return new Error($"識別子が見つかりません。: {identifier.Value}");
         }
 
         public bool IsTruthly(IObject obj)

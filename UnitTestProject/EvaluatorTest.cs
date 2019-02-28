@@ -40,7 +40,8 @@ namespace UnitTestProject
             var parser = new Parser(lexer);
             var root = parser.ParseProgram();
             var evaluator = new Evaluator();
-            return evaluator.Eval(root);
+            var enviroment = new Enviroment();
+            return evaluator.Eval(root, enviroment);
         }
 
         private void _TestIntegerObject(IObject obj, int expected)
@@ -152,7 +153,7 @@ namespace UnitTestProject
             var nullObject = obj as NullObject;
             if (nullObject == null)
             {
-                Assert.Fail($"Object が Null ではありません。{obj.GetType()}");
+                Assert.Fail($"Object が Null ではありません。{obj?.GetType()}");
             }
         }
 
@@ -197,6 +198,7 @@ namespace UnitTestProject
                        0;
                    }", "未知の演算子: BOOLEAN / BOOLEAN"),
                 ("-true + 100", "未知の演算子: -BOOLEAN"),
+                ("foo", "識別子が見つかりません。: foo"),
             };
 
             foreach (var (input, expected) in tests)
@@ -205,10 +207,28 @@ namespace UnitTestProject
                 var error = evaluated as Error;
                 if (error == null)
                 {
-                    Assert.Fail($"エラーオブジェクトではありません。({evaluated.GetType()})");
+                    Assert.Fail($"エラーオブジェクトではありません。({evaluated?.GetType()})");
                 }
 
                 Assert.AreEqual(error.Message, expected);
+            }
+        }
+
+        [TestMethod]
+        public void TestEvalLetStatement()
+        {
+            var tests = new(string, int)[]
+            {
+                ("let a = 1; a;", 1),
+                ("let a = 1 + 2 * 3; a;", 7),
+                ("let a = 1; let b = a; b;", 1),
+                ("let a = 1; let b = 2; let c = a + b; c;", 3),
+            };
+
+            foreach (var (input, expected) in tests)
+            {
+                var evaluated = this._TestEval(input);
+                this._TestIntegerObject(evaluated, expected);
             }
         }
     }
