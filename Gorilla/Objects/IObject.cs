@@ -12,5 +12,6 @@
         BOOLEAN,
         NULL,
         RETURN_VALUE,
+        ERROR_OBJ,
     }
 }

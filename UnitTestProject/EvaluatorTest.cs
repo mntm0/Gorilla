@@ -159,7 +159,7 @@ namespace UnitTestProject
         [TestMethod]
         public void TestEvalReturnStatement()
         {
-            var tests = new (string, int)[]
+            var tests = new(string, int)[]
             {
                 ("return 10;", 10),
                 ("return 10; 1234;", 10),
@@ -176,7 +176,39 @@ namespace UnitTestProject
             foreach (var (input, expected) in tests)
             {
                 var evaluated = this._TestEval(input);
-                    this._TestIntegerObject(evaluated, expected);
+                this._TestIntegerObject(evaluated, expected);
+            }
+        }
+
+        [TestMethod]
+        public void TestErrorHandling()
+        {
+            var tests = new(string, string)[]
+            {
+                ("5 + true;", "型のミスマッチ: INTEGER + BOOLEAN"),
+                ("5 + true; 5;", "型のミスマッチ: INTEGER + BOOLEAN"),
+                ("-true", "未知の演算子: -BOOLEAN"),
+                ("true + false", "未知の演算子: BOOLEAN + BOOLEAN"),
+                ("if (true) { true * false; }", "未知の演算子: BOOLEAN * BOOLEAN"),
+                (@"if (true) {
+                       if (true) {
+                           return false / false;
+                       }
+                       0;
+                   }", "未知の演算子: BOOLEAN / BOOLEAN"),
+                ("-true + 100", "未知の演算子: -BOOLEAN"),
+            };
+
+            foreach (var (input, expected) in tests)
+            {
+                var evaluated = this._TestEval(input);
+                var error = evaluated as Error;
+                if (error == null)
+                {
+                    Assert.Fail($"エラーオブジェクトではありません。({evaluated.GetType()})");
+                }
+
+                Assert.AreEqual(error.Message, expected);
             }
         }
     }

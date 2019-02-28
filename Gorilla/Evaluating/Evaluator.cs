@@ -2,7 +2,6 @@
 using Gorilla.Ast.Expressions;
 using Gorilla.Ast.Statements;
 using Gorilla.Objects;
-using System;
 using System.Collections.Generic;
 
 namespace Gorilla.Evaluating
@@ -26,16 +25,22 @@ namespace Gorilla.Evaluating
                     return this.EvalBlockStatement(blockStatement);
                 case ReturnStatement returnStatement:
                     var value = this.Eval(returnStatement.ReturnValue);
+                    if (this.IsError(value)) return value;
                     return new ReturnValue(value);
                 // 式
                 case PrefixExpression prefixExpression:
                     var right = this.Eval(prefixExpression.Right);
+                    if (this.IsError(right)) return right;
                     return this.EvalPrefixExpression(prefixExpression.Operator, right);
                 case InfixExpression infixExpression:
+                    var ifLeft = this.Eval(infixExpression.Left);
+                    if (this.IsError(ifLeft)) return ifLeft;
+                    var ifRight = this.Eval(infixExpression.Right);
+                    if (this.IsError(ifRight)) return ifRight;
                     return this.EvalInfixExpression(
                         infixExpression.Operator,
-                        this.Eval(infixExpression.Left),
-                        this.Eval(infixExpression.Right)
+                        ifLeft,
+                        ifRight
                     );
                 case IfExpression ifExpression:
                     return this.EvalIfExpression(ifExpression);
@@ -54,9 +59,14 @@ namespace Gorilla.Evaluating
             {
                 result = this.Eval(statement);
 
-                if (result is ReturnValue returnValue)
+                switch (result)
                 {
-                    return returnValue.Value;
+                    case ReturnValue returnValue:
+                       return returnValue.Value;
+                    case Error _:
+                        return result;
+                    default:
+                        break;
                 }
             }
             return result;
@@ -69,7 +79,8 @@ namespace Gorilla.Evaluating
             {
                 result = this.Eval(statement);
 
-                if (result.Type() == ObjectType.RETURN_VALUE) return result;
+                if (result.Type() == ObjectType.RETURN_VALUE
+                    || result.Type() == ObjectType.ERROR_OBJ) return result;
             }
             return result;
         }
@@ -83,7 +94,7 @@ namespace Gorilla.Evaluating
                 case "-":
                     return this.EvalMinusPrefixOperatorExpression(right);
             }
-            return this.Null;
+            return new Error($"未知の演算子: {op}{right.Type()}");
         }
 
         public IObject EvalBangOperator(IObject right)
@@ -96,7 +107,8 @@ namespace Gorilla.Evaluating
 
         public IObject EvalMinusPrefixOperatorExpression(IObject right)
         {
-            if (right.Type() != ObjectType.INTEGER) return this.Null;
+            if (right.Type() != ObjectType.INTEGER)
+                return new Error($"未知の演算子: -{right.Type()}");
 
             var value = (right as IntegerObject).Value;
             return new IntegerObject(-value);
@@ -118,7 +130,10 @@ namespace Gorilla.Evaluating
                     return ToBooleanObject(left!= right);
             }
 
-            return this.Null;
+            if (left.Type() != right.Type())
+                return new Error($"型のミスマッチ: {left.Type()} {op} {right.Type()}");
+
+            return new Error($"未知の演算子: {left.Type()} {op} {right.Type()}");
         }
 
         public IObject EvalIntegerInfixExpression(string op, IntegerObject left, IntegerObject right)
@@ -153,6 +168,7 @@ namespace Gorilla.Evaluating
         public IObject EvalIfExpression(IfExpression ifExpression)
         {
             var condition = this.Eval(ifExpression.Condition);
+            if (this.IsError(condition)) return condition;
 
             if (this.IsTruthly(condition))
             {
@@ -171,6 +187,12 @@ namespace Gorilla.Evaluating
             if (obj == this.False) return false;
             if (obj == this.Null) return false;
             return true;
+        }
+
+        public bool IsError(IObject obj)
+        {
+            if (obj != null) return obj.Type() == ObjectType.ERROR_OBJ;
+            return false;
         }
     }
 }
