@@ -12,7 +12,7 @@ namespace UnitTestProject
         [TestMethod]
         public void TestEvalIntegerExpression()
         {
-            var tests = new(string, int)[]
+            var tests = new (string, int)[]
             {
                 ("1", 1),
                 ("12", 12),
@@ -57,7 +57,7 @@ namespace UnitTestProject
         [TestMethod]
         public void TestEvalBooleanExpression()
         {
-            var tests = new(string, bool)[]
+            var tests = new (string, bool)[]
             {
                 ("true;", true),
                 ("false", false),
@@ -100,7 +100,7 @@ namespace UnitTestProject
         [TestMethod]
         public void TestEvalBangOperator()
         {
-            var tests = new(string, bool)[]
+            var tests = new (string, bool)[]
             {
                 ("!true", false),
                 ("!false", true),
@@ -114,6 +114,45 @@ namespace UnitTestProject
             {
                 var evaluated = this._TestEval(input);
                 this._TestBooleanObject(evaluated, expected);
+            }
+        }
+
+        [TestMethod]
+        public void TestEvalIfExpression()
+        {
+            var tests = new (string, int?)[]
+            {
+                ("if (true) { 1 }", 1),
+                ("if (false) { 1 }", null),
+                ("if (true) { 1 } else { 2 }", 1),
+                ("if (false) { 1 } else { 2 }", 2),
+                ("if (5) { 1 } else { 2 }", 1),
+                ("if (!5) { 1 } else { 2 }", 2),
+                ("if (1 < 2) { 1 } else { 2 }", 1),
+                ("if (1 > 2) { 1 } else { 2 }", 2),
+                ("if (1 > 2) { 1 }", null),
+            };
+
+            foreach (var (input, expected) in tests)
+            {
+                var evaluated = this._TestEval(input);
+                if (expected.HasValue)
+                {
+                    this._TestIntegerObject(evaluated, expected.Value);
+                }
+                else
+                {
+                    this._TestNullObject(evaluated);
+                }
+            }
+        }
+
+        private void _TestNullObject(object obj)
+        {
+            var nullObject = obj as NullObject;
+            if (nullObject == null)
+            {
+                Assert.Fail($"Object が Null ではありません。{obj.GetType()}");
             }
         }
     }

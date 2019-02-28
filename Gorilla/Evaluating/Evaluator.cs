@@ -2,6 +2,7 @@
 using Gorilla.Ast.Expressions;
 using Gorilla.Ast.Statements;
 using Gorilla.Objects;
+using System;
 using System.Collections.Generic;
 
 namespace Gorilla.Evaluating
@@ -21,6 +22,8 @@ namespace Gorilla.Evaluating
                     return this.EvalStatements(root.Statements);
                 case ExpressionStatement statement:
                     return this.Eval(statement.Expression);
+                case BlockStatement blockStatement:
+                    return this.EvalStatements(blockStatement.Statements);
                 // 式
                 case PrefixExpression prefixExpression:
                     var right = this.Eval(prefixExpression.Right);
@@ -31,6 +34,8 @@ namespace Gorilla.Evaluating
                         this.Eval(infixExpression.Left),
                         this.Eval(infixExpression.Right)
                     );
+                case IfExpression ifExpression:
+                    return this.EvalIfExpression(ifExpression);
                 case IntegerLiteral integerLiteral:
                     return new IntegerObject(integerLiteral.Value);
                 case BooleanLiteral booleanLiteral:
@@ -124,5 +129,28 @@ namespace Gorilla.Evaluating
         }
 
         public BooleanObject ToBooleanObject(bool value) => value ? this.True : this.False;
+
+        public IObject EvalIfExpression(IfExpression ifExpression)
+        {
+            var condition = this.Eval(ifExpression.Condition);
+
+            if (this.IsTruthly(condition))
+            {
+                return this.EvalStatements(ifExpression.Consequence.Statements);
+            }
+            else if (ifExpression.Alternative != null)
+            {
+                return this.EvalStatements(ifExpression.Alternative.Statements);
+            }
+            return this.Null;
+        }
+
+        public bool IsTruthly(IObject obj)
+        {
+            if (obj == this.True) return true;
+            if (obj == this.False) return false;
+            if (obj == this.Null) return false;
+            return true;
+        }
     }
 }
