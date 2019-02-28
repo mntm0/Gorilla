@@ -19,11 +19,14 @@ namespace Gorilla.Evaluating
             {
                 // 文
                 case Root root:
-                    return this.EvalStatements(root.Statements);
+                    return this.EvalRootProgram(root.Statements);
                 case ExpressionStatement statement:
                     return this.Eval(statement.Expression);
                 case BlockStatement blockStatement:
-                    return this.EvalStatements(blockStatement.Statements);
+                    return this.EvalBlockStatement(blockStatement);
+                case ReturnStatement returnStatement:
+                    var value = this.Eval(returnStatement.ReturnValue);
+                    return new ReturnValue(value);
                 // 式
                 case PrefixExpression prefixExpression:
                     var right = this.Eval(prefixExpression.Right);
@@ -44,12 +47,29 @@ namespace Gorilla.Evaluating
             return null;
         }
 
-        public IObject EvalStatements(List<IStatement> statements)
+        public IObject EvalRootProgram(List<IStatement> statements)
         {
             IObject result = null;
             foreach (var statement in statements)
             {
                 result = this.Eval(statement);
+
+                if (result is ReturnValue returnValue)
+                {
+                    return returnValue.Value;
+                }
+            }
+            return result;
+        }
+
+        public IObject EvalBlockStatement(BlockStatement blockStatement)
+        {
+            IObject result = null;
+            foreach (var statement in blockStatement.Statements)
+            {
+                result = this.Eval(statement);
+
+                if (result.Type() == ObjectType.RETURN_VALUE) return result;
             }
             return result;
         }
@@ -136,11 +156,11 @@ namespace Gorilla.Evaluating
 
             if (this.IsTruthly(condition))
             {
-                return this.EvalStatements(ifExpression.Consequence.Statements);
+                return this.EvalBlockStatement(ifExpression.Consequence);
             }
             else if (ifExpression.Alternative != null)
             {
-                return this.EvalStatements(ifExpression.Alternative.Statements);
+                return this.EvalBlockStatement(ifExpression.Alternative);
             }
             return this.Null;
         }

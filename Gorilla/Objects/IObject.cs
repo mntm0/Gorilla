@@ -11,5 +11,6 @@
         INTEGER,
         BOOLEAN,
         NULL,
+        RETURN_VALUE,
     }
 }

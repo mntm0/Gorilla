@@ -155,5 +155,29 @@ namespace UnitTestProject
                 Assert.Fail($"Object が Null ではありません。{obj.GetType()}");
             }
         }
+
+        [TestMethod]
+        public void TestEvalReturnStatement()
+        {
+            var tests = new (string, int)[]
+            {
+                ("return 10;", 10),
+                ("return 10; 1234;", 10),
+                ("2*3; return 10; 1234;", 10),
+                ("return 100/10", 10),
+                (@"if (true) {
+                       if (true) {
+                           return 10;
+                       }
+                       0;
+                   }", 10),
+            };
+
+            foreach (var (input, expected) in tests)
+            {
+                var evaluated = this._TestEval(input);
+                    this._TestIntegerObject(evaluated, expected);
+            }
+        }
     }
 }
