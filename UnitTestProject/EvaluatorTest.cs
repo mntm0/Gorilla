@@ -231,5 +231,43 @@ namespace UnitTestProject
                 this._TestIntegerObject(evaluated, expected);
             }
         }
+
+        [TestMethod]
+        public void TestEvalFunctionObject()
+        {
+            var input = "fn(x) { x + 2; }";
+            var evaluated = this._TestEval(input);
+
+            var fn = evaluated as FunctionObject;
+            if (fn == null)
+            {
+                Assert.Fail($"オブジェクトが関数ではありません。({fn?.GetType()})");
+            }
+
+            Assert.AreEqual(fn.Parameters.Count, 1);
+            Assert.AreEqual(fn.Parameters[0].ToCode(), "x");
+            Assert.AreEqual(fn.Body.ToCode(), "{(x + 2) }");
+        }
+
+        [TestMethod]
+        public void TestFunctionApplication()
+        {
+            var tests = new(string, int)[]
+            {
+                ("let identity = fn(x) { x }; identity(10);", 10),
+                ("let identity = fn(x) { return x; }; identity(10);", 10),
+                ("let double = fn(x) { x * 2; }; double(10);", 20),
+                ("let add = fn(x, y) { x + y; }; add(10, 20);", 30),
+                ("let add = fn(x, y) { x + y; }; add(add(10, 20), 30 + 40);", 100),
+                ("fn(x) { x; }(10);", 10),
+                (@"fn(x) { x; }(10);", 10),
+            };
+
+            foreach (var (input, expected) in tests)
+            {
+                var evaluated = this._TestEval(input);
+                this._TestIntegerObject(evaluated, expected);
+            }
+        }
     }
 }

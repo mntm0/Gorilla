@@ -2,8 +2,8 @@
 using Gorilla.Ast.Expressions;
 using Gorilla.Ast.Statements;
 using Gorilla.Objects;
-using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Gorilla.Evaluating
 {
@@ -57,8 +57,77 @@ namespace Gorilla.Evaluating
                     return this.ToBooleanObject(booleanLiteral.Value);
                 case Identifier identifier:
                     return this.EvalIdentifier(identifier, enviroment);
+                case FunctionLiteral functionLiteral:
+                    return new FunctionObject()
+                    {
+                        Parameters = functionLiteral.Parameters,
+                        Body = functionLiteral.Body,
+                        Enviroment = enviroment,
+                    };
+                case CallExpression callExpression:
+                    var fn = this.Eval(callExpression.Function, enviroment);
+                    if (this.IsError(fn))
+                    {
+                        return fn;
+                    }
+                    var args = this.EvalExpressions(callExpression.Arguments, enviroment);
+                    if (this.IsError(args.FirstOrDefault()))
+                    {
+                        return args.First();
+                    }
+                    return this.ApplyFunction(fn, args);
             }
             return null;
+        }
+
+        public IObject ApplyFunction(IObject obj, List<IObject> args)
+        {
+            var fn = obj as FunctionObject;
+            if (fn == null)
+            {
+                return new Error($"function ではありません。: {obj?.GetType()}");
+            }
+
+            var extendedEnviroment = this.ExtendEnviroment(fn, args);
+            var evaluated = this.EvalBlockStatement(fn.Body, extendedEnviroment);
+
+            return this.UnwrapReturnValue(evaluated);
+        }
+
+        public Enviroment ExtendEnviroment(FunctionObject fn, List<IObject> args)
+        {
+            var enviroment = Enviroment.CreateNewEnclosedEnviroment(fn.Enviroment);
+
+            for (int i = 0; i < fn.Parameters.Count; i++)
+            {
+                enviroment.Set(fn.Parameters[i].Value, args[i]);
+            }
+
+            return enviroment;
+        }
+
+        public IObject UnwrapReturnValue(IObject obj)
+        {
+            if (obj is ReturnValue returnValue)
+            {
+                return returnValue.Value;
+            }
+            return obj;
+        }
+
+        public List<IObject> EvalExpressions(List<IExpression> arguments, Enviroment enviroment)
+        {
+            var result = new List<IObject>();
+
+            foreach (var arg in arguments)
+            {
+                var evaluated = this.Eval(arg, enviroment);
+                if (this.IsError(evaluated))
+                    return new List<IObject>() { evaluated };
+                result.Add(evaluated);
+            }
+
+            return result;
         }
 
         public IObject EvalRootProgram(List<IStatement> statements, Enviroment enviroment)
