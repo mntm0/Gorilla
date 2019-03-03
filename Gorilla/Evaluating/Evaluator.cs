@@ -9,9 +9,9 @@ namespace Gorilla.Evaluating
 {
     public class Evaluator
     {
-        public BooleanObject True = new BooleanObject(true);
-        public BooleanObject False = new BooleanObject(false);
-        public NullObject Null = new NullObject();
+        public static BooleanObject True = new BooleanObject(true);
+        public static  BooleanObject False = new BooleanObject(false);
+        public static NullObject Null = new NullObject();
 
         public IObject Eval(INode node, Enviroment enviroment)
         {
@@ -84,16 +84,17 @@ namespace Gorilla.Evaluating
 
         public IObject ApplyFunction(IObject obj, List<IObject> args)
         {
-            var fn = obj as FunctionObject;
-            if (fn == null)
+            switch (obj)
             {
-                return new Error($"function ではありません。: {obj?.GetType()}");
+                case FunctionObject fn:
+                    var extendedEnviroment = this.ExtendEnviroment(fn, args);
+                    var evaluated = this.EvalBlockStatement(fn.Body, extendedEnviroment);
+                    return this.UnwrapReturnValue(evaluated);
+                case BuiltinFunctionObject fn:
+                    return fn.Function(args);
+                default:
+                    return new Error($"function ではありません。: {obj?.GetType()}");
             }
-
-            var extendedEnviroment = this.ExtendEnviroment(fn, args);
-            var evaluated = this.EvalBlockStatement(fn.Body, extendedEnviroment);
-
-            return this.UnwrapReturnValue(evaluated);
         }
 
         public Enviroment ExtendEnviroment(FunctionObject fn, List<IObject> args)
@@ -179,10 +180,10 @@ namespace Gorilla.Evaluating
 
         public IObject EvalBangOperator(IObject right, Enviroment enviroment)
         {
-            if (right == this.True) return this.False;
-            if (right == this.False) return this.True;
-            if (right == this.Null) return this.True;
-            return this.False;
+            if (right == Evaluator.True) return Evaluator.False;
+            if (right == Evaluator.False) return Evaluator.True;
+            if (right == Evaluator.Null) return Evaluator.True;
+            return Evaluator.False;
         }
 
         public IObject EvalMinusPrefixOperatorExpression(IObject right, Enviroment enviroment)
@@ -246,7 +247,7 @@ namespace Gorilla.Evaluating
                 case "!=":
                     return this.ToBooleanObject(leftValue != rightValue);
             }
-            return this.Null;
+            return Evaluator.Null;
         }
 
         public IObject EvalStringInfixExpression(string op, StringObject left, StringObject right, Enviroment enviroment)
@@ -263,7 +264,7 @@ namespace Gorilla.Evaluating
             }
         }
 
-        public BooleanObject ToBooleanObject(bool value) => value ? this.True : this.False;
+        public BooleanObject ToBooleanObject(bool value) => value ? Evaluator.True : Evaluator.False;
 
         public IObject EvalIfExpression(IfExpression ifExpression, Enviroment enviroment)
         {
@@ -278,21 +279,27 @@ namespace Gorilla.Evaluating
             {
                 return this.EvalBlockStatement(ifExpression.Alternative, enviroment);
             }
-            return this.Null;
+            return Evaluator.Null;
         }
 
         public IObject EvalIdentifier(Identifier identifier, Enviroment enviroment)
         {
             var (value, ok) = enviroment.Get(identifier.Value);
             if (ok) return value;
+
+            if (Builtins.BuiltinFunctions.TryGetValue(identifier.Value, out var fn))
+            {
+                return fn;
+            }
+
             return new Error($"識別子が見つかりません。: {identifier.Value}");
         }
 
         public bool IsTruthly(IObject obj)
         {
-            if (obj == this.True) return true;
-            if (obj == this.False) return false;
-            if (obj == this.Null) return false;
+            if (obj == Evaluator.True) return true;
+            if (obj == Evaluator.False) return false;
+            if (obj == Evaluator.Null) return false;
             return true;
         }
 

@@ -12,7 +12,7 @@ namespace UnitTestProject
         [TestMethod]
         public void TestEvalIntegerExpression()
         {
-            var tests = new (string, int)[]
+            var tests = new(string, int)[]
             {
                 ("1", 1),
                 ("12", 12),
@@ -58,7 +58,7 @@ namespace UnitTestProject
         [TestMethod]
         public void TestEvalBooleanExpression()
         {
-            var tests = new (string, bool)[]
+            var tests = new(string, bool)[]
             {
                 ("true;", true),
                 ("false", false),
@@ -101,7 +101,7 @@ namespace UnitTestProject
         [TestMethod]
         public void TestEvalBangOperator()
         {
-            var tests = new (string, bool)[]
+            var tests = new(string, bool)[]
             {
                 ("!true", false),
                 ("!false", true),
@@ -121,7 +121,7 @@ namespace UnitTestProject
         [TestMethod]
         public void TestEvalIfExpression()
         {
-            var tests = new (string, int?)[]
+            var tests = new(string, int?)[]
             {
                 ("if (true) { 1 }", 1),
                 ("if (false) { 1 }", null),
@@ -309,6 +309,46 @@ namespace UnitTestProject
             {
                 var evaluated = this._TestEval(input);
                 this._TestStringObject(evaluated, expected);
+            }
+        }
+
+        [TestMethod]
+        public void TestEvalBuiltinFunctions()
+        {
+            var tests = new(string, object)[]
+            {
+                ("len(\"\")", 0),
+                ("len(\"12345\")", 5),
+                ("len(\"hello world\")", 11),
+                ("len(1)", "len の引数に対応していない型です。(INTEGER)"),
+                ("len(\"one\", \"two\")", "引数の数が間違っています。(引数は1つ)"),
+            };
+
+            foreach (var (input, expected) in tests)
+            {
+                var evaluated = this._TestEval(input);
+                switch (expected)
+                {
+                    case int intValue:
+                        this._TestIntegerObject(evaluated, intValue);
+                        break;
+                    case string message:
+                        var error = evaluated as Error;
+                        if (error == null)
+                        {
+                            Assert.Fail($"Object が Error ではありません。({evaluated?.GetType()})");
+                        }
+                        else
+                        {
+                            if (error.Message != message)
+                            {
+                                Assert.Fail($"エラーメッセージが間違っています。expected={expected}");
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }
