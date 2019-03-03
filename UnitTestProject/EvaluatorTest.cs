@@ -295,5 +295,21 @@ namespace UnitTestProject
 
             Assert.AreEqual(expected, result.Value);
         }
+
+        [TestMethod]
+        public void TestEvalStringConcatenation()
+        {
+            var tests = new(string, string)[]
+            {
+                ($"\"foo\" + \" \" + \"bar\";", "foo bar"),
+                ($"\"Hello\" + \" \" + \"World!!!\";", "Hello World!!!"),
+            };
+
+            foreach (var (input, expected) in tests)
+            {
+                var evaluated = this._TestEval(input);
+                this._TestStringObject(evaluated, expected);
+            }
+        }
     }
 }

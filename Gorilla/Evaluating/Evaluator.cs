@@ -202,6 +202,12 @@ namespace Gorilla.Evaluating
                 return this.EvalIntegerInfixExpression(op, leftIntegerObject, rightIntegerObject, enviroment);
             }
 
+            if (left is StringObject leftStringObject
+                && right is StringObject rightStringObject)
+            {
+                return this.EvalStringInfixExpression(op, leftStringObject, rightStringObject, enviroment);
+            }
+
             switch (op)
             {
                 case "==":
@@ -241,6 +247,20 @@ namespace Gorilla.Evaluating
                     return this.ToBooleanObject(leftValue != rightValue);
             }
             return this.Null;
+        }
+
+        public IObject EvalStringInfixExpression(string op, StringObject left, StringObject right, Enviroment enviroment)
+        {
+            var leftValue = left.Value;
+            var rightValue = right.Value;
+
+            switch (op)
+            {
+                case "+":
+                    return new StringObject(leftValue + rightValue);
+                default:
+                    return new Error($"未知の演算子: {left.Type()} {op} {right.Type()}");
+            }
         }
 
         public BooleanObject ToBooleanObject(bool value) => value ? this.True : this.False;
