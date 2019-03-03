@@ -79,6 +79,7 @@ namespace Gorilla.Parsing
             this.PrefixParseFns.Add(TokenType.LPAREN, this.ParseGroupedExpression);
             this.PrefixParseFns.Add(TokenType.IF, this.ParseIfExpression);
             this.PrefixParseFns.Add(TokenType.FUNCTION, this.ParseFunctionLiteral);
+            this.PrefixParseFns.Add(TokenType.STRING, this.ParseStringLiteral);
         }
 
         private void RegisterInfixParseFns()
@@ -285,6 +286,15 @@ namespace Gorilla.Parsing
             };
             
             return expression;
+        }
+
+        public IExpression ParseStringLiteral()
+        {
+            return new StringLiteral()
+            {
+                Token = this.CurrentToken,
+                Value = this.CurrentToken.Literal,
+            };
         }
 
         public List<IExpression> ParseCallArguments()

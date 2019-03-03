@@ -100,6 +100,10 @@
                 case '}':
                     token = new Token(TokenType.RBRACE, this.CurrentChar.ToString());
                     break;
+                case '"':
+                    var literal = this.ReadString();
+                    token = new Token(TokenType.STRING, literal);
+                    break;
                 case (char)0:
                     token = new Token(TokenType.EOF, "");
                     break;
@@ -124,6 +128,18 @@
 
             this.ReadChar();
             return token;
+        }
+
+        private string ReadString()
+        {
+            var stringValue = "";
+            this.ReadChar();
+            while (this.CurrentChar != '"' && this.CurrentChar != 0)
+            {
+                stringValue += this.CurrentChar;
+                this.ReadChar();
+            }
+            return stringValue;
         }
 
         private string ReadIdentifier()

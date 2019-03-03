@@ -10,6 +10,7 @@
     {
         INTEGER,
         BOOLEAN,
+        STRING,
         NULL,
         RETURN_VALUE,
         ERROR_OBJ,

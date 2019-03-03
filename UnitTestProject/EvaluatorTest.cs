@@ -269,5 +269,31 @@ namespace UnitTestProject
                 this._TestIntegerObject(evaluated, expected);
             }
         }
+
+        [TestMethod]
+        public void TestStringLiteral()
+        {
+            var tests = new(string, string)[]
+            {
+                ("\"foo\";", "foo"),
+            };
+
+            foreach (var (input, expected) in tests)
+            {
+                var evaluated = this._TestEval(input);
+                this._TestStringObject(evaluated, expected);
+            }
+        }
+
+        private void _TestStringObject(IObject obj, string expected)
+        {
+            var result = obj as StringObject;
+            if (result == null)
+            {
+                Assert.Fail("object が String ではありません。");
+            }
+
+            Assert.AreEqual(expected, result.Value);
+        }
     }
 }

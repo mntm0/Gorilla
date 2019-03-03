@@ -41,6 +41,7 @@ namespace Gorilla.Lexing
         // 識別子、整数リテラル
         IDENT,
         INT,
+        STRING,
         // 演算子
         ASSIGN,
         PLUS,

@@ -604,5 +604,53 @@ namespace UnitTestProject
             this._TestInfixExpression(expression.Arguments[1], 2, "*", 3);
             this._TestInfixExpression(expression.Arguments[2], 4, "+", 5);
         }
+
+        [TestMethod]
+        public void TestStringLiteralExpression()
+        {
+            var tests = new(string, string)[]
+            {
+                ($"\"foo\";", "foo"),
+                ($"\"Hello World!!!\";", "Hello World!!!"),
+            };
+
+            foreach (var (input, expected) in tests)
+            {
+                var lexer = new Lexer(input);
+                var parser = new Parser(lexer);
+                var root = parser.ParseProgram();
+                this._CheckParserErrors(parser);
+
+                Assert.AreEqual(
+                    root.Statements.Count, 1,
+                    "Root.Statementsの数が間違っています。"
+                );
+
+                var statement = root.Statements[0] as ExpressionStatement;
+                if (statement == null)
+                {
+                    Assert.Fail("statement が ExpressionStatement ではありません。");
+                }
+
+                this._TestStringLiteral(statement.Expression, expected);
+            }
+        }
+
+        private void _TestStringLiteral(IExpression expression, string value)
+        {
+            var literal = expression as StringLiteral;
+            if (literal == null)
+            {
+                Assert.Fail("Expression が StringLiteral ではありません。");
+            }
+            if (literal.Value != value)
+            {
+                Assert.Fail($"literal.Value が \"{value}\" ではありません。");
+            }
+            if (literal.TokenLiteral() != $"{value}")
+            {
+                Assert.Fail($"literal.TokenLiteral が \"{value}\" ではありません。");
+            }
+        }
     }
 }

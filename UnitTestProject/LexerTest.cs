@@ -140,7 +140,10 @@ let result = add(five, ten);";
     return true;
 } else {
     return false;
-}";
+}
+""foobar""
+""foo bar""
+";
 
             var testTokens = new List<Token>();
             testTokens.Add(new Token(TokenType.IF, "if"));
@@ -160,6 +163,8 @@ let result = add(five, ten);";
             testTokens.Add(new Token(TokenType.FALSE, "false"));
             testTokens.Add(new Token(TokenType.SEMICOLON, ";"));
             testTokens.Add(new Token(TokenType.RBRACE, "}"));
+            testTokens.Add(new Token(TokenType.STRING, "foobar"));
+            testTokens.Add(new Token(TokenType.STRING, "foo bar"));
             testTokens.Add(new Token(TokenType.EOF, ""));
 
             var lexer = new Lexer(input);

@@ -55,6 +55,8 @@ namespace Gorilla.Evaluating
                     return new IntegerObject(integerLiteral.Value);
                 case BooleanLiteral booleanLiteral:
                     return this.ToBooleanObject(booleanLiteral.Value);
+                case StringLiteral stringLiteral:
+                    return new StringObject(stringLiteral.Value);
                 case Identifier identifier:
                     return this.EvalIdentifier(identifier, enviroment);
                 case FunctionLiteral functionLiteral:
