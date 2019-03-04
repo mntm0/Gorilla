@@ -369,5 +369,36 @@ namespace UnitTestProject
             this._TestIntegerObject(array.Elements[1], 4);
             this._TestIntegerObject(array.Elements[2], 9);
         }
+
+        [TestMethod]
+        public void TestEvalIndexExpressions()
+        {
+            var tests = new(string, int?)[]
+            {
+                ("[1, 2, 3][0]", 1),
+                ("[1, 2, 3][1]", 2),
+                ("[1, 2, 3][2]", 3),
+                ("let i = 1; [1, 2][i]", 2),
+                ("[1, 2, 3][1 + 1]", 3),
+                ("let a = [1, 2, 3]; a[1]", 2),
+                ("let a = [1, 2, 3]; a[0] + a[1] + a[2]", 6),
+                ("let a =[1, 2, 3]; a[3]", null),
+                ("let a =[1, 2, 3]; a[-1]", null),
+            };
+
+            foreach (var (input, expected) in tests)
+            {
+                var evaluated = this._TestEval(input);
+
+                if (expected.HasValue)
+                {
+                    this._TestIntegerObject(evaluated, expected.Value);
+                }
+                else
+                {
+                    this._TestNullObject(evaluated);
+                }
+            }
+        }
     }
 }

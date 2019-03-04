@@ -2,6 +2,7 @@
 using Gorilla.Ast.Expressions;
 using Gorilla.Ast.Statements;
 using Gorilla.Objects;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,7 +11,7 @@ namespace Gorilla.Evaluating
     public class Evaluator
     {
         public static BooleanObject True = new BooleanObject(true);
-        public static  BooleanObject False = new BooleanObject(false);
+        public static BooleanObject False = new BooleanObject(false);
         public static NullObject Null = new NullObject();
 
         public IObject Eval(INode node, Enviroment enviroment)
@@ -85,8 +86,39 @@ namespace Gorilla.Evaluating
                         return elements[0];
                     }
                     return new ArrayObject(elements);
+                case IndexExpression indexExpression:
+                    var left = this.Eval(indexExpression.Left, enviroment);
+                    if (this.IsError(left)) return left;
+                    var index = this.Eval(indexExpression.Index, enviroment);
+                    if (this.IsError(index)) return index;
+                    return this.EvalIndexExpression(left, index);
             }
             return null;
+        }
+
+        public IObject EvalIndexExpression(IObject left, IObject index)
+        {
+            var array = left as ArrayObject;
+            var indexInt = index as IntegerObject;
+            if (array == null)
+            {
+                return new Error($"インデックス演算子は {left.Type()} をサポートしません。");
+            }
+            else if (indexInt == null)
+            {
+                return new Error($"インデックスが整数型ではありません。({index.Type()})");
+            }
+
+            return this.EvalArrayIndexExpression(array, indexInt);
+        }
+
+        public IObject EvalArrayIndexExpression(ArrayObject array, IntegerObject index)
+        {
+            var i = index.Value;
+            var max = array.Elements.Count - 1;
+            if (i < 0 || max < i) return Evaluator.Null;
+
+            return array.Elements[i];
         }
 
         public IObject ApplyFunction(IObject obj, List<IObject> args)
@@ -150,7 +182,7 @@ namespace Gorilla.Evaluating
                 switch (result)
                 {
                     case ReturnValue returnValue:
-                       return returnValue.Value;
+                        return returnValue.Value;
                     case Error _:
                         return result;
                     default:
@@ -221,7 +253,7 @@ namespace Gorilla.Evaluating
                 case "==":
                     return ToBooleanObject(left == right);
                 case "!=":
-                    return ToBooleanObject(left!= right);
+                    return ToBooleanObject(left != right);
             }
 
             if (left.Type() != right.Type())
