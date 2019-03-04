@@ -351,5 +351,23 @@ namespace UnitTestProject
                 }
             }
         }
+
+        [TestMethod]
+        public void TestEvalArrayLiteral()
+        {
+            var input = "[1, 2 + 2, 3 * 3]";
+            var evaluated = this._TestEval(input);
+
+            var array = evaluated as ArrayObject;
+            if (array == null)
+            {
+                Assert.Fail($"Object が ArrayObject ではありません。({evaluated?.GetType()})");
+            }
+
+            Assert.AreEqual(3, array.Elements.Count);
+            this._TestIntegerObject(array.Elements[0], 1);
+            this._TestIntegerObject(array.Elements[1], 4);
+            this._TestIntegerObject(array.Elements[2], 9);
+        }
     }
 }

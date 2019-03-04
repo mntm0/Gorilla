@@ -78,6 +78,13 @@ namespace Gorilla.Evaluating
                         return args.First();
                     }
                     return this.ApplyFunction(fn, args);
+                case ArrayLiteral arrayLiteral:
+                    var elements = this.EvalExpressions(arrayLiteral.Elements, enviroment);
+                    if (elements.Count == 1 && this.IsError(elements[0]))
+                    {
+                        return elements[0];
+                    }
+                    return new ArrayObject(elements);
             }
             return null;
         }

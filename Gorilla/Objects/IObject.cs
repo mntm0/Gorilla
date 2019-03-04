@@ -16,5 +16,6 @@
         ERROR_OBJ,
         FUNCTION_OBJ,
         BUILTIN_OBJ,
+        ARRAY_OBJ,
     }
 }
