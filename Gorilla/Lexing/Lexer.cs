@@ -100,6 +100,12 @@
                 case '}':
                     token = new Token(TokenType.RBRACE, this.CurrentChar.ToString());
                     break;
+                case '[':
+                    token = new Token(TokenType.LBRACKET, this.CurrentChar.ToString());
+                    break;
+                case ']':
+                    token = new Token(TokenType.RBRACKET, this.CurrentChar.ToString());
+                    break;
                 case '"':
                     var literal = this.ReadString();
                     token = new Token(TokenType.STRING, literal);

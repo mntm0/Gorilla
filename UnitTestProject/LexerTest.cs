@@ -143,6 +143,7 @@ let result = add(five, ten);";
 }
 ""foobar""
 ""foo bar""
+[1, 2];
 ";
 
             var testTokens = new List<Token>();
@@ -165,6 +166,12 @@ let result = add(five, ten);";
             testTokens.Add(new Token(TokenType.RBRACE, "}"));
             testTokens.Add(new Token(TokenType.STRING, "foobar"));
             testTokens.Add(new Token(TokenType.STRING, "foo bar"));
+            testTokens.Add(new Token(TokenType.LBRACKET, "["));
+            testTokens.Add(new Token(TokenType.INT, "1"));
+            testTokens.Add(new Token(TokenType.COMMA, ","));
+            testTokens.Add(new Token(TokenType.INT, "2"));
+            testTokens.Add(new Token(TokenType.RBRACKET, "]"));
+            testTokens.Add(new Token(TokenType.SEMICOLON, ";"));
             testTokens.Add(new Token(TokenType.EOF, ""));
 
             var lexer = new Lexer(input);

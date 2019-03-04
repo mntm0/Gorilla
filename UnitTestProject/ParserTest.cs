@@ -209,7 +209,7 @@ namespace UnitTestProject
         [TestMethod]
         public void TestInfixExpressions1()
         {
-            var tests = new (string, object, string, object)[] {
+            var tests = new(string, object, string, object)[] {
                 ("1 + 1;", 1, "+", 1),
                 ("1 - 1;", 1, "-", 1),
                 ("1 * 1;", 1, "*", 1),
@@ -270,6 +270,9 @@ namespace UnitTestProject
                 ("add(1, 2) + 3 > 4", "((add(1, 2) + 3) > 4)"),
                 ("add(x, y, 1, 2*3, 4+5, add(z) )", "add(x, y, 1, (2 * 3), (4 + 5), add(z))"),
                 ("add(1 + 2 - 3 * 4 / 5 + 6)", "add((((1 + 2) - ((3 * 4) / 5)) + 6))"),
+                ("a[0]() * a[1]", "((a[0])() * (a[1]))"),
+                ("array[0] + array[1]() + [1,2]*2", "(((array[0]) + (array[1])()) + ([1, 2] * 2))"),
+                ("add(a * b[2], b[1], 2 * [1, 2][1])", "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))"),
             };
 
             foreach (var (input, code) in tests)
@@ -555,7 +558,7 @@ namespace UnitTestProject
 
                 var statement = root.Statements[0] as ExpressionStatement;
                 var fn = statement.Expression as FunctionLiteral;
-                
+
                 Assert.AreEqual(
                     fn.Parameters.Count, parameters.Length,
                     "関数リテラルの引数の数が間違っています。"
@@ -651,6 +654,71 @@ namespace UnitTestProject
             {
                 Assert.Fail($"literal.TokenLiteral が \"{value}\" ではありません。");
             }
+        }
+
+        [TestMethod]
+        public void TestArrayLiteralExpression()
+        {
+            var input = "[1, 2+2, 3*3];";
+            var lexer = new Lexer(input);
+            var parser = new Parser(lexer);
+            var root = parser.ParseProgram();
+            this._CheckParserErrors(parser);
+
+            Assert.AreEqual(
+                root.Statements.Count, 1,
+                "Root.Statementsの数が間違っています。"
+            );
+
+            var statement = root.Statements[0] as ExpressionStatement;
+            if (statement == null)
+            {
+                Assert.Fail("statement が ExpressionStatement ではありません。");
+            }
+
+            var arrayLiteral = statement.Expression as ArrayLiteral;
+            if (arrayLiteral == null)
+            {
+                Assert.Fail("statement.Expression が ArrayLiteral ではありません。");
+            }
+
+            var elements = arrayLiteral.Elements;
+            Assert.AreEqual(3, elements.Count);
+            this._TestIntegerLiteral(elements[0], 1);
+            this._TestInfixExpression(elements[1], 2, "+", 2);
+            this._TestInfixExpression(elements[2], 3, "*", 3);
+        }
+
+        [TestMethod]
+        public void TestIndexExpression()
+        {
+            var input = "array[1 + 1];";
+            var lexer = new Lexer(input);
+            var parser = new Parser(lexer);
+            var root = parser.ParseProgram();
+            this._CheckParserErrors(parser);
+
+            Assert.AreEqual(
+                root.Statements.Count, 1,
+                "Root.Statementsの数が間違っています。"
+            );
+
+            var statement = root.Statements[0] as ExpressionStatement;
+            if (statement == null)
+            {
+                Assert.Fail("statement が ExpressionStatement ではありません。");
+            }
+
+            var indexExpression = statement.Expression as IndexExpression;
+            if (indexExpression == null)
+            {
+                Assert.Fail("statement.Expression が IndexExpression ではありません。");
+            }
+
+            var left = indexExpression.Left;
+            var index = indexExpression.Index;
+            this._TestIdentifier(left, "array");
+            this._TestInfixExpression(index, 1, "+", 1);
         }
     }
 }

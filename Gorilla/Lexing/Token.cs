@@ -56,11 +56,13 @@ namespace Gorilla.Lexing
         // デリミタ
         COMMA,
         SEMICOLON,
-        // 括弧(){}
+        // 括弧(){}[]
         LPAREN,
         RPAREN,
         LBRACE,
         RBRACE,
+        LBRACKET,
+        RBRACKET,
         // キーワード
         FUNCTION,
         LET,

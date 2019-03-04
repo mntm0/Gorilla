@@ -30,6 +30,7 @@ namespace Gorilla.Parsing
                 { TokenType.SLASH, Precedence.PRODUCT },
                 { TokenType.ASTERISK, Precedence.PRODUCT },
                 { TokenType.LPAREN, Precedence.CALL },
+                { TokenType.LBRACKET, Precedence.INDEX },
             };
         public Precedence CurrentPrecedence
         {
@@ -80,6 +81,7 @@ namespace Gorilla.Parsing
             this.PrefixParseFns.Add(TokenType.IF, this.ParseIfExpression);
             this.PrefixParseFns.Add(TokenType.FUNCTION, this.ParseFunctionLiteral);
             this.PrefixParseFns.Add(TokenType.STRING, this.ParseStringLiteral);
+            this.PrefixParseFns.Add(TokenType.LBRACKET, this.ParseArrayLiteral);
         }
 
         private void RegisterInfixParseFns()
@@ -94,6 +96,7 @@ namespace Gorilla.Parsing
             this.InfixParseFns.Add(TokenType.LT, this.ParseInfixExpression);
             this.InfixParseFns.Add(TokenType.GT, this.ParseInfixExpression);
             this.InfixParseFns.Add(TokenType.LPAREN, this.ParseCallExpression);
+            this.InfixParseFns.Add(TokenType.LBRACKET, this.ParseIndexExpression);
         }
 
         private void ReadToken()
@@ -282,7 +285,7 @@ namespace Gorilla.Parsing
             {
                 Token = this.CurrentToken,
                 Function = fn,
-                Arguments = this.ParseCallArguments(),
+                Arguments = this.ParseCallArguments(TokenType.RPAREN),
             };
             
             return expression;
@@ -297,13 +300,37 @@ namespace Gorilla.Parsing
             };
         }
 
-        public List<IExpression> ParseCallArguments()
+        public IExpression ParseArrayLiteral()
+        {
+            var array = new ArrayLiteral();
+            array.Token = this.CurrentToken;
+            array.Elements = this.ParseCallArguments(TokenType.RBRACKET);
+            return array;
+        }
+
+        public IExpression ParseIndexExpression(IExpression left)
+        {
+            var expression = new IndexExpression()
+            {
+                Token = this.CurrentToken,
+                Left = left,
+            };
+
+            this.ReadToken();
+
+            expression.Index = this.ParseExpression(Precedence.LOWEST);
+            if (!this.ExpectPeek(TokenType.RBRACKET)) return null;
+
+            return expression;
+        }
+
+        public List<IExpression> ParseCallArguments(TokenType endTokenType)
         {
             var args = new List<IExpression>();
 
             this.ReadToken();
 
-            if (this.CurrentToken.Type == TokenType.RPAREN) return args;
+            if (this.CurrentToken.Type == endTokenType) return args;
 
             args.Add(this.ParseExpression(Precedence.LOWEST));
 
@@ -314,7 +341,7 @@ namespace Gorilla.Parsing
                 args.Add(this.ParseExpression(Precedence.LOWEST));
             }
 
-            if (!this.ExpectPeek(TokenType.RPAREN)) return null;
+            if (!this.ExpectPeek(endTokenType)) return null;
 
             return args;
         }
@@ -446,5 +473,6 @@ namespace Gorilla.Parsing
         PRODUCT,     // *
         PREFIX,      // -x, !x
         CALL,        // myFunction(x)
+        INDEX,       // myArray[0]
     }
 }
